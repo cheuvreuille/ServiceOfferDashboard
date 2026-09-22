@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tableau de pilotage commercial Identity.ai">
+  <title>Identity.ai — Business plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="Accueil Identity.ai">
+      <span class="brand-mark">ID</span>
+      <span>Identity<span class="brand-dot">.ai</span></span>
+    </a>
+    <nav aria-label="Navigation principale">
+      <a class="nav-link active" href="#"><span class="nav-icon">▦</span>Business plan</a>
+      <a class="nav-link" href="#pipeline"><span class="nav-icon">◇</span>Pipeline</a>
+      <a class="nav-link" href="#ressources"><span class="nav-icon">⌁</span>Ressources</a>
+    </nav>
+    <div class="sidebar-card">
+      <span class="eyebrow">OFFRE</span>
+      <strong>IAM, augmenté.</strong>
+      <p>Sécuriser l’IA.<br>Réinventer l’IAM.</p>
+      <div class="offer-tags"><span>IAM4IA</span><span>IA4IAM</span></div>
+    </div>
+    <div class="profile">
+      <div class="avatar">CM</div>
+      <div><strong>Consultant Manager</strong><span>Practice Identity.ai</span></div>
+      <button aria-label="Options du profil">•••</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div class="breadcrumb"><span>Identity.ai</span><b>/</b>Business plan</div>
+      <div class="top-actions">
+        <button class="icon-button" id="resetButton" title="Réinitialiser les données" aria-label="Réinitialiser les données">↻</button>
+        <button class="icon-button" aria-label="Notifications">♢<i></i></button>
+        <button class="primary-button" id="openModal"><span>＋</span> Ajouter une entreprise</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="hero">
+        <div>
+          <p class="kicker">PILOTAGE COMMERCIAL <span></span> FY 2026</p>
+          <h1>Business plan <em>Identity.ai</em></h1>
+          <p class="subtitle">Suivez vos opportunités et transformez vos pitchs en missions à fort impact.</p>
+        </div>
+        <div class="updated"><span></span> Données mises à jour <b id="updatedAt">à l’instant</b></div>
+      </section>
+
+      <section class="metrics" aria-label="Indicateurs clés">
+        <article class="metric-card purple"><div class="metric-head"><span>ENTREPRISES CIBLÉES</span><div>◎</div></div><strong id="companyCount">0</strong><p><b id="activeCount">0 actives</b> dans le pipeline</p></article>
+        <article class="metric-card blue"><div class="metric-head"><span>OPPORTUNITÉS IAM4IA</span><div>✦</div></div><strong id="iamCount">0</strong><p>Gouvernance des accès IA</p></article>
+        <article class="metric-card coral"><div class="metric-head"><span>OPPORTUNITÉS IA4IAM</span><div>⌁</div></div><strong id="aiCount">0</strong><p>IA au service de l’IAM</p></article>
+        <article class="metric-card green"><div class="metric-head"><span>TAUX DE COUVERTURE</span><div>↗</div></div><strong id="coverage">0%</strong><p><b id="linkCount">0 liens</b> business associés</p></article>
+      </section>
+
+      <section class="workspace" id="pipeline">
+        <div class="workspace-head">
+          <div><h2>Plan de comptes</h2><p>Qualification et suivi des opportunités par entreprise</p></div>
+          <div class="view-actions"><button class="view active">▤</button><button class="view">▦</button><button class="more">•••</button></div>
+        </div>
+        <div class="toolbar">
+          <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Rechercher une entreprise, un secteur…"></label>
+          <select id="sectorFilter" aria-label="Filtrer par secteur"><option value="">Tous les secteurs</option></select>
+          <select id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>À contacter</option><option>En discussion</option><option>Pitch planifié</option><option>Pitch réalisé</option></select>
+          <button class="filter-button" id="clearFilters">⊘ <span>Effacer</span></button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>SECTEUR</th><th>ENTREPRISE</th><th>STATUT</th><th>IAM4IA</th><th>IA4IAM</th><th>LIEN BT / DPIA</th><th>LIEN BU IA</th><th></th></tr></thead>
+            <tbody id="accountRows"></tbody>
+          </table>
+          <div class="empty-state" id="emptyState" hidden><span>⌕</span><strong>Aucun résultat</strong><p>Essayez de modifier vos filtres de recherche.</p></div>
+        </div>
+        <footer class="table-footer"><span id="resultCount"></span><div><button disabled>‹</button><b>1</b><button disabled>›</button></div></footer>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="accountDialog">
+    <form id="accountForm" method="dialog">
+      <div class="modal-head"><div><span class="eyebrow">NOUVELLE CIBLE</span><h2>Ajouter une entreprise</h2></div><button type="button" class="close" id="closeModal">×</button></div>
+      <div class="form-grid">
+        <label>Entreprise<input required name="company" placeholder="Ex. Nova Industries"></label>
+        <label>Secteur<input required name="sector" placeholder="Ex. Industrie"></label>
+        <label>Statut<select name="status"><option>À contacter</option><option>En discussion</option><option>Pitch planifié</option><option>Pitch réalisé</option></select></label>
+        <label>Lien BT / DPIA<input name="bt" type="url" placeholder="https://..."></label>
+        <label>Lien BU IA<input name="bu" type="url" placeholder="https://..."></label>
+      </div>
+      <div class="checks"><label><input type="checkbox" name="iam"> Opportunité IAM4IA</label><label><input type="checkbox" name="ai"> Opportunité IA4IAM</label></div>
+      <div class="modal-actions"><button type="button" class="secondary-button" id="cancelModal">Annuler</button><button class="primary-button" type="submit">Ajouter au plan</button></div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
