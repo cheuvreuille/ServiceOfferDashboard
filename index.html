@@ -74,7 +74,10 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>SECTEUR</th><th>ENTREPRISE</th><th>STATUT</th><th>IAM4IA</th><th>IA4IAM</th><th>LIEN BT / DPIA</th><th>LIEN BU IA</th><th></th></tr></thead>
+            <thead>
+              <tr class="group-head"><th rowspan="2">SECTEUR</th><th rowspan="2">ENTREPRISE</th><th rowspan="2">STATUT DU PITCH</th><th class="iam-group" colspan="3">IAM4IA</th><th class="ai-group" colspan="3">IA4IAM</th><th rowspan="2">LIEN BT / DPIA</th><th rowspan="2">LIEN BU IA</th><th rowspan="2"></th></tr>
+              <tr class="sub-head"><th>STATUT</th><th>CONTACT WAVESTONE</th><th>CONTACT CLIENT</th><th>STATUT</th><th>CONTACT WAVESTONE</th><th>CONTACT CLIENT</th></tr>
+            </thead>
             <tbody id="accountRows"></tbody>
           </table>
           <div class="empty-state" id="emptyState" hidden><span>⌕</span><strong>Aucun résultat</strong><p>Essayez de modifier vos filtres de recherche.</p></div>
@@ -94,7 +97,10 @@
         <label>Lien BT / DPIA<input name="bt" type="url" placeholder="https://..."></label>
         <label>Lien BU IA<input name="bu" type="url" placeholder="https://..."></label>
       </div>
-      <div class="checks"><label><input type="checkbox" name="iam"> Opportunité IAM4IA</label><label><input type="checkbox" name="ai"> Opportunité IA4IAM</label></div>
+      <div class="offer-fields">
+        <fieldset><legend>IAM4IA</legend><label>Statut<select name="iamStatus"><option>À qualifier</option><option>Identifiée</option><option>En discussion</option><option>Proposition envoyée</option><option>Gagnée</option><option>Non qualifiée</option></select></label><label>Contact Wavestone<input name="iamWavestone" placeholder="Prénom Nom"></label><label>Contact client<input name="iamClient" placeholder="Prénom Nom"></label></fieldset>
+        <fieldset><legend>IA4IAM</legend><label>Statut<select name="aiStatus"><option>À qualifier</option><option>Identifiée</option><option>En discussion</option><option>Proposition envoyée</option><option>Gagnée</option><option>Non qualifiée</option></select></label><label>Contact Wavestone<input name="aiWavestone" placeholder="Prénom Nom"></label><label>Contact client<input name="aiClient" placeholder="Prénom Nom"></label></fieldset>
+      </div>
       <div class="modal-actions"><button type="button" class="secondary-button" id="cancelModal">Annuler</button><button class="primary-button" type="submit">Ajouter au plan</button></div>
     </form>
   </dialog>
