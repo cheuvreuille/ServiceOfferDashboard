@@ -1,10 +1,10 @@
 const seedAccounts = [
-  { sector: "Banque", company: "Groupe Aster", status: "Pitch planifié", iam: { status: "En discussion", wavestone: "Léa Martin", client: "Marc Leroy" }, ai: { status: "Identifiée", wavestone: "Samir Diallo", client: "Sophie Bernard" }, bt: "https://example.com/dpia/aster", bu: "https://example.com/bu/aster" },
-  { sector: "Énergie", company: "Voltéo", status: "En discussion", iam: { status: "Proposition envoyée", wavestone: "Léa Martin", client: "Julie Robert" }, ai: { status: "Non qualifiée", wavestone: "", client: "" }, bt: "https://example.com/dpia/volteo", bu: "" },
-  { sector: "Industrie", company: "Nexum Industries", status: "Pitch réalisé", iam: { status: "Gagnée", wavestone: "Paul Petit", client: "Alain Morel" }, ai: { status: "En discussion", wavestone: "Samir Diallo", client: "Alain Morel" }, bt: "https://example.com/dpia/nexum", bu: "https://example.com/bu/nexum" },
-  { sector: "Assurance", company: "Horizon Assurances", status: "À contacter", iam: { status: "Non qualifiée", wavestone: "", client: "" }, ai: { status: "À qualifier", wavestone: "Chloé Simon", client: "" }, bt: "", bu: "https://example.com/bu/horizon" },
-  { sector: "Retail", company: "Maison Lumen", status: "En discussion", iam: { status: "Identifiée", wavestone: "Paul Petit", client: "Emma Dubois" }, ai: { status: "Identifiée", wavestone: "Chloé Simon", client: "Emma Dubois" }, bt: "https://example.com/dpia/lumen", bu: "https://example.com/bu/lumen" },
-  { sector: "Santé", company: "Clinisys", status: "À contacter", iam: { status: "À qualifier", wavestone: "Léa Martin", client: "" }, ai: { status: "Non qualifiée", wavestone: "", client: "" }, bt: "", bu: "" }
+  { sector: "Banque", company: "Groupe Aster", iam: { status: "En discussion", wavestone: "Léa Martin", client: "Marc Leroy" }, ai: { status: "Identifiée", wavestone: "Samir Diallo", client: "Sophie Bernard" }, bt: "https://example.com/dpia/aster", bu: "https://example.com/bu/aster" },
+  { sector: "Énergie", company: "Voltéo", iam: { status: "Proposition envoyée", wavestone: "Léa Martin", client: "Julie Robert" }, ai: { status: "Non qualifiée", wavestone: "", client: "" }, bt: "https://example.com/dpia/volteo", bu: "" },
+  { sector: "Industrie", company: "Nexum Industries", iam: { status: "Gagnée", wavestone: "Paul Petit", client: "Alain Morel" }, ai: { status: "En discussion", wavestone: "Samir Diallo", client: "Alain Morel" }, bt: "https://example.com/dpia/nexum", bu: "https://example.com/bu/nexum" },
+  { sector: "Assurance", company: "Horizon Assurances", iam: { status: "Non qualifiée", wavestone: "", client: "" }, ai: { status: "À qualifier", wavestone: "Chloé Simon", client: "" }, bt: "", bu: "https://example.com/bu/horizon" },
+  { sector: "Retail", company: "Maison Lumen", iam: { status: "Identifiée", wavestone: "Paul Petit", client: "Emma Dubois" }, ai: { status: "Identifiée", wavestone: "Chloé Simon", client: "Emma Dubois" }, bt: "https://example.com/dpia/lumen", bu: "https://example.com/bu/lumen" },
+  { sector: "Santé", company: "Clinisys", iam: { status: "À qualifier", wavestone: "Léa Martin", client: "" }, ai: { status: "Non qualifiée", wavestone: "", client: "" }, bt: "", bu: "" }
 ];
 
 const storageKey = "identity-ai-accounts";
@@ -21,12 +21,15 @@ const sectorFilter = document.querySelector("#sectorFilter");
 const statusFilter = document.querySelector("#statusFilter");
 const offerStatuses = ["À qualifier", "Identifiée", "En discussion", "Proposition envoyée", "Gagnée", "Non qualifiée"];
 const escapeHtml = value => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
-const statusClass = status => ({ "En discussion": "discussion", "Pitch planifié": "planifie", "Pitch réalisé": "realise" })[status] || "";
 const offerStatusClass = status => status.toLocaleLowerCase("fr").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replaceAll(" ", "-");
+
+function updateTimestamp() {
+  document.querySelector("#updatedAt").textContent = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+}
 
 function save() {
   localStorage.setItem(storageKey, JSON.stringify(accounts));
-  document.querySelector("#updatedAt").textContent = "à l’instant";
+  updateTimestamp();
 }
 
 function hydrateSectors() {
@@ -44,15 +47,15 @@ function offerCells(offer, track, index) {
 
 function render() {
   const query = search.value.trim().toLocaleLowerCase("fr");
-  const filtered = accounts.filter(account => (!query || `${account.company} ${account.sector}`.toLocaleLowerCase("fr").includes(query)) && (!sectorFilter.value || account.sector === sectorFilter.value) && (!statusFilter.value || account.status === statusFilter.value));
+  const filtered = accounts.filter(account => (!query || `${account.company} ${account.sector}`.toLocaleLowerCase("fr").includes(query)) && (!sectorFilter.value || account.sector === sectorFilter.value) && (!statusFilter.value || account.iam.status === statusFilter.value || account.ai.status === statusFilter.value));
   rows.innerHTML = filtered.map(account => {
     const index = accounts.indexOf(account);
-    return `<tr><td><span class="sector">${escapeHtml(account.sector)}</span></td><td class="company">${escapeHtml(account.company)}</td><td><span class="status ${statusClass(account.status)}">${escapeHtml(account.status)}</span></td>${offerCells(account.iam, "iam", index)}${offerCells(account.ai, "ai", index)}<td>${account.bt ? `<a class="link" href="${escapeHtml(account.bt)}" target="_blank" rel="noreferrer">Ouvrir</a>` : '<span class="no-link">—</span>'}</td><td>${account.bu ? `<a class="link" href="${escapeHtml(account.bu)}" target="_blank" rel="noreferrer">Ouvrir</a>` : '<span class="no-link">—</span>'}</td><td><button class="delete" data-index="${index}" title="Supprimer ${escapeHtml(account.company)}">×</button></td></tr>`;
+    return `<tr><td><span class="sector">${escapeHtml(account.sector)}</span></td><td class="company">${escapeHtml(account.company)}</td>${offerCells(account.iam, "iam", index)}${offerCells(account.ai, "ai", index)}<td>${account.bt ? `<a class="link" href="${escapeHtml(account.bt)}" target="_blank" rel="noreferrer">Ouvrir</a>` : '<span class="no-link">—</span>'}</td><td>${account.bu ? `<a class="link" href="${escapeHtml(account.bu)}" target="_blank" rel="noreferrer">Ouvrir</a>` : '<span class="no-link">—</span>'}</td><td><button class="delete" data-index="${index}" title="Supprimer ${escapeHtml(account.company)}">×</button></td></tr>`;
   }).join("");
   document.querySelector("#emptyState").hidden = filtered.length > 0;
   document.querySelector("#resultCount").textContent = `${filtered.length} entreprise${filtered.length > 1 ? "s" : ""} sur ${accounts.length}`;
   document.querySelector("#companyCount").textContent = accounts.length;
-  document.querySelector("#activeCount").textContent = `${accounts.filter(account => account.status !== "À contacter").length} actives`;
+  document.querySelector("#activeCount").textContent = `${accounts.filter(account => account.iam.status !== "Non qualifiée" || account.ai.status !== "Non qualifiée").length} actives`;
   document.querySelector("#iamCount").textContent = accounts.filter(account => account.iam.status !== "Non qualifiée").length;
   document.querySelector("#aiCount").textContent = accounts.filter(account => account.ai.status !== "Non qualifiée").length;
   const links = accounts.filter(account => account.bt || account.bu).length;
@@ -83,13 +86,24 @@ form.addEventListener("submit", event => {
   event.preventDefault();
   const data = new FormData(form);
   accounts.unshift({
-    company: data.get("company").trim(), sector: data.get("sector").trim(), status: data.get("status"), bt: data.get("bt").trim(), bu: data.get("bu").trim(),
+    company: data.get("company").trim(), sector: data.get("sector").trim(), bt: data.get("bt").trim(), bu: data.get("bu").trim(),
     iam: { status: data.get("iamStatus"), wavestone: data.get("iamWavestone").trim(), client: data.get("iamClient").trim() },
     ai: { status: data.get("aiStatus"), wavestone: data.get("aiWavestone").trim(), client: data.get("aiClient").trim() }
   });
   save(); hydrateSectors(); render(); form.reset(); dialog.close();
 });
 document.querySelector("#resetButton").addEventListener("click", () => { accounts = structuredClone(seedAccounts); save(); hydrateSectors(); render(); });
+document.querySelector("#exportButton").addEventListener("click", () => {
+  const payload = { exportedAt: new Date().toISOString(), accounts };
+  const file = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(file);
+  link.download = `identity-ai-business-plan-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  updateTimestamp();
+});
 
 hydrateSectors();
 render();
+updateTimestamp();
