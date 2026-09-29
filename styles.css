@@ -21,3 +21,6 @@ table{min-width:1380px}
 .offer-fields legend{padding:0 7px;color:#6849cf;font:700 11px "Space Grotesk"}
 .offer-fields fieldset:nth-child(2) legend{color:#3974cb}
 @media(max-width:760px){.offer-fields{grid-template-columns:1fr}}
+.export-button{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;background:#fff}
+.export-button span{font-size:16px;color:#6f4bdd}
+@media(max-width:760px){.export-button{font-size:0;padding:9px}.export-button span{font-size:17px}}

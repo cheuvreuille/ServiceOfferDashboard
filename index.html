@@ -40,6 +40,7 @@
       <div class="top-actions">
         <button class="icon-button" id="resetButton" title="Réinitialiser les données" aria-label="Réinitialiser les données">↻</button>
         <button class="icon-button" aria-label="Notifications">♢<i></i></button>
+        <button class="secondary-button export-button" id="exportButton"><span>⇩</span> Sauvegarder en JSON</button>
         <button class="primary-button" id="openModal"><span>＋</span> Ajouter une entreprise</button>
       </div>
     </header>
@@ -69,13 +70,13 @@
         <div class="toolbar">
           <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Rechercher une entreprise, un secteur…"></label>
           <select id="sectorFilter" aria-label="Filtrer par secteur"><option value="">Tous les secteurs</option></select>
-          <select id="statusFilter" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option>À contacter</option><option>En discussion</option><option>Pitch planifié</option><option>Pitch réalisé</option></select>
+          <select id="statusFilter" aria-label="Filtrer par statut d’opportunité"><option value="">Tous les statuts d’opportunité</option><option>À qualifier</option><option>Identifiée</option><option>En discussion</option><option>Proposition envoyée</option><option>Gagnée</option><option>Non qualifiée</option></select>
           <button class="filter-button" id="clearFilters">⊘ <span>Effacer</span></button>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr class="group-head"><th rowspan="2">SECTEUR</th><th rowspan="2">ENTREPRISE</th><th rowspan="2">STATUT DU PITCH</th><th class="iam-group" colspan="3">IAM4IA</th><th class="ai-group" colspan="3">IA4IAM</th><th rowspan="2">LIEN BT / DPIA</th><th rowspan="2">LIEN BU IA</th><th rowspan="2"></th></tr>
+              <tr class="group-head"><th rowspan="2">SECTEUR</th><th rowspan="2">ENTREPRISE</th><th class="iam-group" colspan="3">IAM4IA</th><th class="ai-group" colspan="3">IA4IAM</th><th rowspan="2">LIEN BT / DPIA</th><th rowspan="2">LIEN BU IA</th><th rowspan="2"></th></tr>
               <tr class="sub-head"><th>STATUT</th><th>CONTACT WAVESTONE</th><th>CONTACT CLIENT</th><th>STATUT</th><th>CONTACT WAVESTONE</th><th>CONTACT CLIENT</th></tr>
             </thead>
             <tbody id="accountRows"></tbody>
@@ -93,7 +94,6 @@
       <div class="form-grid">
         <label>Entreprise<input required name="company" placeholder="Ex. Nova Industries"></label>
         <label>Secteur<input required name="sector" placeholder="Ex. Industrie"></label>
-        <label>Statut<select name="status"><option>À contacter</option><option>En discussion</option><option>Pitch planifié</option><option>Pitch réalisé</option></select></label>
         <label>Lien BT / DPIA<input name="bt" type="url" placeholder="https://..."></label>
         <label>Lien BU IA<input name="bu" type="url" placeholder="https://..."></label>
       </div>
