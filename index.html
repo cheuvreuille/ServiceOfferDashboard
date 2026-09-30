@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard de pilotage Identity.ai">
+  <title>Identity.ai — Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">ID</span><span>Identity<em>.ai</em></span></div>
+    <p class="nav-label">ESPACES DE SUIVI</p>
+    <nav id="sideTabs" aria-label="Thèmes du dashboard"></nav>
+    <div class="sidebar-note"><b>Identity.ai</b><span>IAM pour l’IA<br>IA pour l’IAM</span></div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div><span>Identity.ai</span><b>/</b><strong id="breadcrumb">Suivi prospection</strong></div>
+      <div class="save-state"><i></i> Enregistré localement · <span id="updatedAt">à l’instant</span></div>
+    </header>
+
+    <div class="mobile-tabs" id="mobileTabs"></div>
+    <div class="content">
+      <section class="hero">
+        <div><p class="kicker">PILOTAGE DE L’OFFRE</p><h1 id="pageTitle">Suivi prospection</h1><p id="pageDescription"></p></div>
+        <div class="hero-actions">
+          <button class="button secondary" id="syncButton" type="button">⟳ Lier un fichier Excel</button>
+          <button class="button secondary" id="resetButton" type="button">↻ Réinitialiser</button>
+          <button class="button secondary" id="exportButton" type="button">⇩ Sauvegarder en fichier Excel</button>
+          <button class="button primary" id="addButton" type="button">＋ Ajouter une ligne</button>
+        </div>
+      </section>
+
+      <section class="metrics" id="metrics" aria-label="Indicateurs clés"></section>
+
+      <div class="sync-banner" id="syncBanner" hidden>
+        <div><i></i><strong id="syncTitle">Excel connecté</strong><span id="syncStatus"></span></div>
+        <button type="button" id="syncNowButton">Synchroniser maintenant</button>
+      </div>
+
+      <section class="workspace">
+        <div class="workspace-head">
+          <div><h2 id="tableTitle"></h2><p>Toutes les cellules peuvent être modifiées directement.</p></div>
+          <label class="search">⌕ <input id="searchInput" type="search" placeholder="Rechercher dans le tableau…"></label>
+        </div>
+        <div class="table-wrap">
+          <table id="dataTable"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+          <div class="empty" id="emptyState" hidden><b>Aucune ligne</b><span>Ajoutez une ligne ou modifiez votre recherche.</span></div>
+        </div>
+        <footer><span id="resultCount"></span><span>Stockage local automatique</span></footer>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="rowDialog">
+    <form id="rowForm">
+      <div class="modal-head"><div><span>NOUVELLE ENTRÉE</span><h2 id="modalTitle"></h2></div><button type="button" id="closeDialog" aria-label="Fermer">×</button></div>
+      <div class="form-grid" id="formFields"></div>
+      <div class="modal-actions"><button class="button secondary" type="button" id="cancelDialog">Annuler</button><button class="button primary" type="submit">Ajouter</button></div>
+    </form>
+  </dialog>
+  <dialog id="syncDialog">
+    <form id="syncForm">
+      <div class="modal-head"><div><span>SYNCHRONISATION BIDIRECTIONNELLE</span><h2>Lier un fichier Excel</h2></div><button type="button" id="closeSyncDialog" aria-label="Fermer">×</button></div>
+      <p class="dialog-help">Indiquez l’URL directe d’un fichier Excel XML <code>.xls</code>. Le serveur doit autoriser les requêtes CORS <code>GET</code> et <code>PUT</code>. Le lien est enregistré uniquement dans ce navigateur.</p>
+      <label class="full-field">Lien vers le fichier Excel<input id="syncUrl" name="url" type="url" required placeholder="https://serveur.exemple/tableau.xls"></label>
+      <label class="full-field">Fréquence de lecture<select id="syncInterval" name="interval"><option value="5">Toutes les 5 secondes</option><option value="15">Toutes les 15 secondes</option><option value="30">Toutes les 30 secondes</option><option value="60">Toutes les minutes</option></select></label>
+      <div class="sync-error" id="syncError" hidden></div>
+      <div class="modal-actions"><button class="button danger" type="button" id="disconnectButton">Déconnecter</button><span></span><button class="button secondary" type="button" id="cancelSyncDialog">Annuler</button><button class="button primary" type="submit">Connecter et lire</button></div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
