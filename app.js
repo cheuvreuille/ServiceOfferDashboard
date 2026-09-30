@@ -58,16 +58,23 @@ const tabs = {
 };
 
 const STORAGE_KEY = "identity-ai-dashboard-v2";
+const SYNC_STORAGE_KEY = "identity-ai-dashboard-sync-v1";
 const clone = value => JSON.parse(JSON.stringify(value));
 const initialData = Object.fromEntries(Object.entries(tabs).map(([key, tab]) => [key, clone(tab.seed)]));
 let data;
 try { data = { ...initialData, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; } catch { data = clone(initialData); }
 let activeTab = "prospection";
+let syncConfig;
+try { syncConfig = JSON.parse(localStorage.getItem(SYNC_STORAGE_KEY) || "{}"); } catch { syncConfig = {}; }
+let syncTimer = null;
+let pushTimer = null;
+let applyingRemoteData = false;
 const $ = selector => document.querySelector(selector);
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   $("#updatedAt").textContent = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+  if (!applyingRemoteData && syncConfig[activeTab]?.url) schedulePush();
 }
 
 function control(column, value = "", index = null) {
@@ -112,7 +119,7 @@ function render() {
   $("#emptyState").hidden = filtered.length > 0; $("#resultCount").textContent = `${filtered.length} ligne${filtered.length > 1 ? "s" : ""} sur ${rows.length}`;
 }
 
-function setTab(key) { activeTab = key; $("#searchInput").value = ""; render(); }
+function setTab(key) { activeTab = key; $("#searchInput").value = ""; render(); startSync(); }
 function buildTabs(container) { container.innerHTML = Object.entries(tabs).map(([key, tab]) => `<button type="button" data-tab="${key}"><span>${tab.icon}</span>${tab.label}</button>`).join(""); }
 buildTabs($("#sideTabs")); buildTabs($("#mobileTabs"));
 document.addEventListener("click", event => { const tabButton = event.target.closest("[data-tab]"); if (tabButton) setTab(tabButton.dataset.tab); });
@@ -128,11 +135,66 @@ $("#rowForm").addEventListener("submit", event => { event.preventDefault(); cons
 $("#resetButton").addEventListener("click", () => { data[activeTab] = clone(tabs[activeTab].seed); save(); render(); });
 
 function xmlEscape(value) { return escapeHtml(value); }
+function workbookXml(tabKey = activeTab) {
+  const tab = tabs[tabKey];
+  const rowXml = data[tabKey].map(row => `<Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(row[column.key] || "")}</Data></Cell>`).join("")}</Row>`).join("");
+  return `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="${xmlEscape(tab.label)}"><Table><Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(column.label)}</Data></Cell>`).join("")}</Row>${rowXml}</Table></Worksheet></Workbook>`;
+}
 $("#exportButton").addEventListener("click", () => {
-  const tab = tabs[activeTab];
-  const rowXml = data[activeTab].map(row => `<Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(row[column.key] || "")}</Data></Cell>`).join("")}</Row>`).join("");
-  const xml = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="${xmlEscape(tab.label)}"><Table><Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(column.label)}</Data></Cell>`).join("")}</Row>${rowXml}</Table></Worksheet></Workbook>`;
-  const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([xml], { type: "application/vnd.ms-excel" })); link.download = `${activeTab}-${new Date().toISOString().slice(0, 10)}.xls`; link.click(); URL.revokeObjectURL(link.href);
+  const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([workbookXml()], { type: "application/vnd.ms-excel" })); link.download = `${activeTab}-${new Date().toISOString().slice(0, 10)}.xls`; link.click(); URL.revokeObjectURL(link.href);
 });
 
-render(); save();
+function setSyncStatus(message, state = "ok") {
+  $("#syncBanner").hidden = !syncConfig[activeTab]?.url; $("#syncStatus").textContent = message; $("#syncBanner").dataset.state = state;
+  $("#syncTitle").textContent = state === "error" ? "Synchronisation interrompue" : "Excel connecté";
+}
+function parseWorkbook(xmlText, tabKey) {
+  const documentXml = new DOMParser().parseFromString(xmlText, "application/xml");
+  if (documentXml.querySelector("parsererror")) throw new Error("Le fichier reçu n’est pas un fichier Excel XML valide.");
+  const rows = [...documentXml.getElementsByTagName("Row")]; if (!rows.length) return [];
+  const values = row => [...row.getElementsByTagName("Cell")].map(cell => cell.getElementsByTagName("Data")[0]?.textContent || "");
+  const headers = values(rows[0]), columns = tabs[tabKey].columns, indexes = columns.map(column => headers.indexOf(column.label));
+  const missing = columns.filter((column, index) => indexes[index] < 0).map(column => column.label);
+  if (missing.length) throw new Error(`Colonnes absentes : ${missing.join(", ")}`);
+  return rows.slice(1).map(row => { const cells = values(row), item = {}; columns.forEach((column, index) => { item[column.key] = cells[indexes[index]] || ""; }); return item; });
+}
+async function pullExcel(showErrors = true) {
+  const tabKey = activeTab, config = syncConfig[tabKey]; if (!config?.url) return;
+  setSyncStatus("Lecture du fichier…", "loading");
+  try {
+    const headers = config.etag ? { "If-None-Match": config.etag } : {};
+    const response = await fetch(config.url, { method: "GET", headers, cache: "no-store" });
+    if (response.status === 304) { setSyncStatus("Fichier à jour"); return; }
+    if (!response.ok) throw new Error(`Lecture impossible (HTTP ${response.status})`);
+    const rows = parseWorkbook(await response.text(), tabKey);
+    if (JSON.stringify(rows) !== JSON.stringify(data[tabKey])) { applyingRemoteData = true; data[tabKey] = rows; save(); applyingRemoteData = false; if (activeTab === tabKey) render(); }
+    config.etag = response.headers.get("ETag") || ""; config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
+    setSyncStatus(`Dernière lecture à ${new Date().toLocaleTimeString("fr-FR")}`);
+  } catch (error) { applyingRemoteData = false; setSyncStatus(error.message, "error"); if (showErrors) throw error; }
+}
+async function pushExcel() {
+  const tabKey = activeTab, config = syncConfig[tabKey]; if (!config?.url) return;
+  setSyncStatus("Écriture dans le fichier…", "loading");
+  try {
+    const headers = { "Content-Type": "application/vnd.ms-excel" }; if (config.etag) headers["If-Match"] = config.etag;
+    const response = await fetch(config.url, { method: "PUT", headers, body: workbookXml(tabKey) });
+    if (response.status === 412) { await pullExcel(false); throw new Error("Le fichier a changé : sa version distante a été rechargée."); }
+    if (!response.ok) throw new Error(`Écriture impossible (HTTP ${response.status})`);
+    config.etag = response.headers.get("ETag") || ""; config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
+    setSyncStatus(`Modifications envoyées à ${new Date().toLocaleTimeString("fr-FR")}`);
+  } catch (error) { setSyncStatus(error.message, "error"); }
+}
+function schedulePush() { clearTimeout(pushTimer); pushTimer = setTimeout(pushExcel, 700); }
+function startSync() {
+  clearInterval(syncTimer); clearTimeout(pushTimer); const config = syncConfig[activeTab]; $("#syncBanner").hidden = !config?.url; if (!config?.url) return;
+  setSyncStatus(config.lastSync ? `Dernière synchronisation à ${new Date(config.lastSync).toLocaleTimeString("fr-FR")}` : "Connexion en attente…");
+  pullExcel(false); syncTimer = setInterval(() => pullExcel(false), Number(config.interval || 5) * 1000);
+}
+const syncDialog = $("#syncDialog");
+$("#syncButton").addEventListener("click", () => { const config = syncConfig[activeTab] || {}; $("#syncUrl").value = config.url || ""; $("#syncInterval").value = config.interval || "5"; $("#disconnectButton").hidden = !config.url; $("#syncError").hidden = true; syncDialog.showModal(); });
+[$("#closeSyncDialog"), $("#cancelSyncDialog")].forEach(button => button.addEventListener("click", () => syncDialog.close()));
+$("#syncForm").addEventListener("submit", async event => { event.preventDefault(); const form = new FormData(event.currentTarget); syncConfig[activeTab] = { url: String(form.get("url")).trim(), interval: Number(form.get("interval")) }; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); try { await pullExcel(true); syncDialog.close(); startSync(); } catch (error) { $("#syncError").textContent = error.message; $("#syncError").hidden = false; } });
+$("#disconnectButton").addEventListener("click", () => { delete syncConfig[activeTab]; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); syncDialog.close(); startSync(); });
+$("#syncNowButton").addEventListener("click", () => pullExcel(false));
+
+render(); save(); startSync();
