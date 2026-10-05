@@ -6,16 +6,17 @@ Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent ava
 
 Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur. Le bouton **Sauvegarder en fichier Excel** exporte uniquement le tableau de l’onglet actif dans un fichier `.xls` lisible par Excel.
 
-## Synchronisation avec un fichier Excel
+## Synchronisation avec un fichier Excel SharePoint
 
-Le bouton **Lier un fichier Excel** associe séparément chaque onglet à l’URL directe d’un fichier Excel XML (`.xls`) :
+Le bouton **Lier un Excel SharePoint** associe séparément chaque onglet à un classeur `.xlsx` hébergé sur SharePoint. Il accepte directement le lien de partage SharePoint et utilise Microsoft Graph pour lire et modifier les cellules du classeur :
 
 - les changements du tableau sont envoyés au fichier après 700 ms ;
 - le fichier est relu automatiquement toutes les 5, 15, 30 ou 60 secondes ;
 - les en-têtes du fichier doivent correspondre exactement à ceux de l’onglet ;
-- les `ETag` HTTP sont utilisés, lorsqu’ils sont disponibles, pour éviter d’écraser une modification distante concurrente.
+- une feuille peut être indiquée ; à défaut, la première feuille du classeur est utilisée ;
+- avant chaque écriture, le dashboard vérifie que le contenu distant n’a pas changé afin de ne pas écraser une modification SharePoint.
 
-Le serveur qui héberge le fichier doit accepter les méthodes HTTP `GET` et `PUT`, exposer le fichier directement (et non une page de prévisualisation) et autoriser ces requêtes avec CORS. Un simple lien SharePoint ou OneDrive de consultation ne donne généralement pas de droit d’écriture HTTP : il faut alors fournir une URL WebDAV, une URL signée autorisant `PUT`, ou un connecteur Microsoft Graph configuré côté serveur.
+La synchronisation nécessite un **jeton d’accès Microsoft Graph** autorisé à lire et modifier le classeur. Ce jeton n’est jamais écrit dans le `localStorage` : il reste uniquement en mémoire et doit être renseigné à nouveau après le rechargement de la page. Le lien SharePoint, le nom de la feuille et la fréquence de lecture restent enregistrés localement.
 
 ## Lancer localement
 

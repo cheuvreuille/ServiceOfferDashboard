@@ -69,6 +69,7 @@ try { syncConfig = JSON.parse(localStorage.getItem(SYNC_STORAGE_KEY) || "{}"); }
 let syncTimer = null;
 let pushTimer = null;
 let applyingRemoteData = false;
+const sharePointTokens = {};
 const $ = selector => document.querySelector(selector);
 
 function save() {
@@ -147,29 +148,51 @@ $("#exportButton").addEventListener("click", () => {
 
 function setSyncStatus(message, state = "ok") {
   $("#syncBanner").hidden = !syncConfig[activeTab]?.url; $("#syncStatus").textContent = message; $("#syncBanner").dataset.state = state;
-  $("#syncTitle").textContent = state === "error" ? "Synchronisation interrompue" : "Excel connecté";
+  $("#syncTitle").textContent = state === "error" ? "Synchronisation SharePoint interrompue" : "Excel SharePoint connecté";
 }
-function parseWorkbook(xmlText, tabKey) {
-  const documentXml = new DOMParser().parseFromString(xmlText, "application/xml");
-  if (documentXml.querySelector("parsererror")) throw new Error("Le fichier reçu n’est pas un fichier Excel XML valide.");
-  const rows = [...documentXml.getElementsByTagName("Row")]; if (!rows.length) return [];
-  const values = row => [...row.getElementsByTagName("Cell")].map(cell => cell.getElementsByTagName("Data")[0]?.textContent || "");
-  const headers = values(rows[0]), columns = tabs[tabKey].columns, indexes = columns.map(column => headers.indexOf(column.label));
+function shareId(url) {
+  const bytes = new TextEncoder().encode(url);
+  let binary = ""; bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return `u!${btoa(binary).replaceAll("/", "_").replaceAll("+", "-").replace(/=+$/, "")}`;
+}
+async function graphRequest(tabKey, path, options = {}) {
+  const token = sharePointTokens[tabKey];
+  if (!token) throw new Error("Le jeton Microsoft Graph est requis pour cette session.");
+  const response = await fetch(`https://graph.microsoft.com/v1.0${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(options.headers || {}) } });
+  if (response.status === 401 || response.status === 403) throw new Error("Accès SharePoint refusé. Vérifiez le jeton et les droits Microsoft Graph.");
+  if (!response.ok) throw new Error(`Microsoft Graph a retourné HTTP ${response.status}.`);
+  return response.status === 204 ? null : response.json();
+}
+async function workbookContext(tabKey) {
+  const config = syncConfig[tabKey];
+  if (config.driveId && config.itemId && config.worksheetId) return config;
+  const item = await graphRequest(tabKey, `/shares/${shareId(config.url)}/driveItem?$select=id,name,parentReference`);
+  if (!item.name?.toLowerCase().endsWith(".xlsx")) throw new Error("Le lien SharePoint doit désigner un classeur Excel .xlsx.");
+  const sheets = await graphRequest(tabKey, `/drives/${item.parentReference.driveId}/items/${item.id}/workbook/worksheets?$select=id,name`);
+  const sheet = config.worksheet ? sheets.value.find(value => value.name === config.worksheet) : sheets.value[0];
+  if (!sheet) throw new Error(`Feuille introuvable : ${config.worksheet || "première feuille"}.`);
+  Object.assign(config, { driveId: item.parentReference.driveId, itemId: item.id, worksheetId: sheet.id, worksheetName: sheet.name });
+  localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); return config;
+}
+function rowsFromValues(values, tabKey) {
+  if (!values?.length) return [];
+  const headers = values[0].map(String), columns = tabs[tabKey].columns, indexes = columns.map(column => headers.indexOf(column.label));
   const missing = columns.filter((column, index) => indexes[index] < 0).map(column => column.label);
   if (missing.length) throw new Error(`Colonnes absentes : ${missing.join(", ")}`);
-  return rows.slice(1).map(row => { const cells = values(row), item = {}; columns.forEach((column, index) => { item[column.key] = cells[indexes[index]] || ""; }); return item; });
+  return values.slice(1).filter(row => row.some(cell => cell !== "" && cell != null)).map(cells => { const item = {}; columns.forEach((column, index) => { item[column.key] = String(cells[indexes[index]] ?? ""); }); return item; });
+}
+async function readSharePoint(tabKey) {
+  const config = await workbookContext(tabKey);
+  const range = await graphRequest(tabKey, `/drives/${config.driveId}/items/${config.itemId}/workbook/worksheets/${encodeURIComponent(config.worksheetId)}/usedRange(valuesOnly=true)?$select=values`);
+  const values = range.values || []; return { rows: rowsFromValues(values, tabKey), snapshot: JSON.stringify(values) };
 }
 async function pullExcel(showErrors = true) {
   const tabKey = activeTab, config = syncConfig[tabKey]; if (!config?.url) return;
   setSyncStatus("Lecture du fichier…", "loading");
   try {
-    const headers = config.etag ? { "If-None-Match": config.etag } : {};
-    const response = await fetch(config.url, { method: "GET", headers, cache: "no-store" });
-    if (response.status === 304) { setSyncStatus("Fichier à jour"); return; }
-    if (!response.ok) throw new Error(`Lecture impossible (HTTP ${response.status})`);
-    const rows = parseWorkbook(await response.text(), tabKey);
+    const { rows, snapshot } = await readSharePoint(tabKey);
     if (JSON.stringify(rows) !== JSON.stringify(data[tabKey])) { applyingRemoteData = true; data[tabKey] = rows; save(); applyingRemoteData = false; if (activeTab === tabKey) render(); }
-    config.etag = response.headers.get("ETag") || ""; config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
+    config.remoteSnapshot = snapshot; config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
     setSyncStatus(`Dernière lecture à ${new Date().toLocaleTimeString("fr-FR")}`);
   } catch (error) { applyingRemoteData = false; setSyncStatus(error.message, "error"); if (showErrors) throw error; }
 }
@@ -177,25 +200,30 @@ async function pushExcel() {
   const tabKey = activeTab, config = syncConfig[tabKey]; if (!config?.url) return;
   setSyncStatus("Écriture dans le fichier…", "loading");
   try {
-    const headers = { "Content-Type": "application/vnd.ms-excel" }; if (config.etag) headers["If-Match"] = config.etag;
-    const response = await fetch(config.url, { method: "PUT", headers, body: workbookXml(tabKey) });
-    if (response.status === 412) { await pullExcel(false); throw new Error("Le fichier a changé : sa version distante a été rechargée."); }
-    if (!response.ok) throw new Error(`Écriture impossible (HTTP ${response.status})`);
-    config.etag = response.headers.get("ETag") || ""; config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
+    const remote = await readSharePoint(tabKey);
+    if (config.remoteSnapshot && remote.snapshot !== config.remoteSnapshot) { applyingRemoteData = true; data[tabKey] = remote.rows; save(); applyingRemoteData = false; if (activeTab === tabKey) render(); config.remoteSnapshot = remote.snapshot; throw new Error("Le classeur a changé : sa version SharePoint a été rechargée."); }
+    const context = await workbookContext(tabKey), columns = tabs[tabKey].columns;
+    const values = [columns.map(column => column.label), ...data[tabKey].map(row => columns.map(column => row[column.key] || ""))];
+    await graphRequest(tabKey, `/drives/${context.driveId}/items/${context.itemId}/workbook/worksheets/${encodeURIComponent(context.worksheetId)}/usedRange/clear`, { method: "POST", body: JSON.stringify({ applyTo: "Contents" }) });
+    const lastColumn = excelColumn(columns.length), address = `A1:${lastColumn}${Math.max(values.length, 1)}`;
+    await graphRequest(tabKey, `/drives/${context.driveId}/items/${context.itemId}/workbook/worksheets/${encodeURIComponent(context.worksheetId)}/range(address='${address}')`, { method: "PATCH", body: JSON.stringify({ values }) });
+    config.remoteSnapshot = JSON.stringify(values); config.lastSync = new Date().toISOString(); localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig));
     setSyncStatus(`Modifications envoyées à ${new Date().toLocaleTimeString("fr-FR")}`);
   } catch (error) { setSyncStatus(error.message, "error"); }
 }
+function excelColumn(number) { let result = ""; while (number > 0) { number -= 1; result = String.fromCharCode(65 + number % 26) + result; number = Math.floor(number / 26); } return result; }
 function schedulePush() { clearTimeout(pushTimer); pushTimer = setTimeout(pushExcel, 700); }
 function startSync() {
   clearInterval(syncTimer); clearTimeout(pushTimer); const config = syncConfig[activeTab]; $("#syncBanner").hidden = !config?.url; if (!config?.url) return;
+  if (!sharePointTokens[activeTab]) { setSyncStatus("Jeton Microsoft Graph requis : ouvrez la configuration.", "error"); return; }
   setSyncStatus(config.lastSync ? `Dernière synchronisation à ${new Date(config.lastSync).toLocaleTimeString("fr-FR")}` : "Connexion en attente…");
   pullExcel(false); syncTimer = setInterval(() => pullExcel(false), Number(config.interval || 5) * 1000);
 }
 const syncDialog = $("#syncDialog");
-$("#syncButton").addEventListener("click", () => { const config = syncConfig[activeTab] || {}; $("#syncUrl").value = config.url || ""; $("#syncInterval").value = config.interval || "5"; $("#disconnectButton").hidden = !config.url; $("#syncError").hidden = true; syncDialog.showModal(); });
+$("#syncButton").addEventListener("click", () => { const config = syncConfig[activeTab] || {}; $("#syncUrl").value = config.url || ""; $("#syncToken").value = sharePointTokens[activeTab] || ""; $("#syncWorksheet").value = config.worksheet || ""; $("#syncInterval").value = config.interval || "5"; $("#disconnectButton").hidden = !config.url; $("#syncError").hidden = true; syncDialog.showModal(); });
 [$("#closeSyncDialog"), $("#cancelSyncDialog")].forEach(button => button.addEventListener("click", () => syncDialog.close()));
-$("#syncForm").addEventListener("submit", async event => { event.preventDefault(); const form = new FormData(event.currentTarget); syncConfig[activeTab] = { url: String(form.get("url")).trim(), interval: Number(form.get("interval")) }; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); try { await pullExcel(true); syncDialog.close(); startSync(); } catch (error) { $("#syncError").textContent = error.message; $("#syncError").hidden = false; } });
-$("#disconnectButton").addEventListener("click", () => { delete syncConfig[activeTab]; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); syncDialog.close(); startSync(); });
+$("#syncForm").addEventListener("submit", async event => { event.preventDefault(); const form = new FormData(event.currentTarget), tabKey = activeTab; sharePointTokens[tabKey] = String(form.get("token")).trim(); syncConfig[tabKey] = { url: String(form.get("url")).trim(), worksheet: String(form.get("worksheet")).trim(), interval: Number(form.get("interval")) }; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); try { await pullExcel(true); syncDialog.close(); startSync(); } catch (error) { $("#syncError").textContent = error.message; $("#syncError").hidden = false; } });
+$("#disconnectButton").addEventListener("click", () => { delete syncConfig[activeTab]; delete sharePointTokens[activeTab]; localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(syncConfig)); syncDialog.close(); startSync(); });
 $("#syncNowButton").addEventListener("click", () => pullExcel(false));
 
 render(); save(); startSync();
