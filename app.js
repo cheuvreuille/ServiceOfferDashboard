@@ -8,17 +8,17 @@ const tabs = {
       { key: "secteur", label: "secteur", type: "select", options: ["manuf", "dc", "ps", "fs"] },
       { key: "entreprise", label: "entreprise", type: "text" },
       { key: "diContact", label: "di contact", type: "text" },
-      { key: "aiContact", label: "ai contact", type: "text", group: "ai contact" },
-      { key: "aiContactStatut", label: "statut", type: "select", options: CONTACT_STATUSES, group: "ai contact" },
-      { key: "dpaiContact", label: "dpai contact", type: "text", group: "dpai contact" },
-      { key: "dpaiContactStatut", label: "statut", type: "select", options: CONTACT_STATUSES, group: "dpai contact" },
       { key: "ai4iamStatut", label: "statut ai4iam", type: "select", options: OFFER_STATUSES, group: "ai4iam" },
       { key: "ai4iamDate", label: "date ai4iam", type: "date", group: "ai4iam" },
       { key: "ai4iamContactClient", label: "contact client", type: "text", group: "ai4iam" },
       { key: "iam4aiStatut", label: "statut iam4ai", type: "select", options: OFFER_STATUSES, group: "iam4ai" },
       { key: "iam4aiDate", label: "date iam4ai", type: "date", group: "iam4ai" },
       { key: "iam4aiContactClient", label: "contact client", type: "text", group: "iam4ai" },
-      { key: "commentaire", label: "Commentaire", type: "text" }
+      { key: "aiContact", label: "ai contact", type: "text", group: "ai contact" },
+      { key: "aiContactStatut", label: "statut", type: "select", options: CONTACT_STATUSES, group: "ai contact" },
+      { key: "dpaiContact", label: "dpai contact", type: "text", group: "dpai contact" },
+      { key: "dpaiContactStatut", label: "statut", type: "select", options: CONTACT_STATUSES, group: "dpai contact" },
+      { key: "commentaire", label: "Commentaire", type: "textarea" }
     ],
     seed: [{ secteur: "fs", entreprise: "Groupe Aster", diContact: "Marie Dupont", aiContact: "Nora Martin", aiContactStatut: "discussion", dpaiContact: "Paul Robert", dpaiContactStatut: "pitch", ai4iamStatut: "pitch prévu", ai4iamDate: "2026-10-15", ai4iamContactClient: "Nora Martin", iam4aiStatut: "lead", iam4aiDate: "2026-10-22", iam4aiContactClient: "Paul Robert", commentaire: "Préparer le prochain atelier." }]
   },
@@ -80,6 +80,7 @@ function save() {
 function control(column, value = "", index = null) {
   const attributes = index === null ? `name="${column.key}"` : `data-index="${index}" data-key="${column.key}"`;
   if (column.type === "select") return `<select ${attributes} aria-label="${column.label}">${column.options.map(option => `<option${option === value ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  if (column.type === "textarea") return `<textarea ${attributes} placeholder="Ajouter un commentaire…" aria-label="${column.label}">${escapeHtml(value)}</textarea>`;
   return `<input ${attributes} type="${column.type}" value="${escapeHtml(value)}" ${column.type === "url" ? 'placeholder="https://…"' : 'placeholder="—"'} aria-label="${column.label}">`;
 }
 
