@@ -2,10 +2,6 @@
 
 Dashboard web statique composé de quatre espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage** et **Suivi expertise**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
 
-L’interface reprend un langage visuel éditorial proche de Wavestone : contrastes noir et blanc, accent corail, touches vert citron, titres affirmés et composants sobres. Les titres de colonnes sont centrés et affichés en majuscules.
-
-Chaque colonne possède son propre filtre sous son intitulé. Les listes proposent leurs valeurs métier et les champs texte acceptent une recherche partielle. Le bouton **×** en bout de ligne efface tous les filtres de l’onglet actif ; la recherche générale reste disponible en complément.
-
 Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
 
 Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur.
@@ -28,3 +24,16 @@ python3 -m http.server 8000
 ```
 
 Puis ouvrir [http://localhost:8000](http://localhost:8000).
+
+## Publier le dashboard
+
+Le dépôt contient un workflow GitHub Pages qui publie automatiquement le dashboard à chaque push sur `main` ou `work`. Il peut aussi être lancé manuellement depuis l’onglet **Actions** de GitHub.
+
+Pour la première publication :
+
+1. ouvrir **Settings → Pages** dans le dépôt GitHub ;
+2. sélectionner **GitHub Actions** dans **Build and deployment → Source** ;
+3. pousser les changements sur `main` ou `work`, ou lancer l’action **Publier le dashboard** manuellement ;
+4. récupérer l’adresse publique affichée dans l’environnement `github-pages` à la fin du déploiement.
+
+Le site publié reste entièrement statique : les données sont conservées dans le `localStorage` de chaque navigateur et ne deviennent pas publiques. Pour transmettre les tableaux à un autre utilisateur, utiliser **Exporter Excel**, puis lui faire importer le fichier avec **Importer Excel**.
