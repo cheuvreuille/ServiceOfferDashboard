@@ -2,7 +2,7 @@
 
 Dashboard web statique composé de quatre espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage** et **Suivi expertise**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
 
-L’interface conserve son identité visuelle originale, sobre et professionnelle, fondée sur des tons bleu nuit et violet. Les titres de colonnes sont centrés et affichés en majuscules.
+L’interface reprend un langage visuel éditorial proche de Wavestone : contrastes noir et blanc, accent corail, touches vert citron, titres affirmés et composants sobres. Les titres de colonnes sont centrés et affichés en majuscules.
 
 Chaque colonne possède son propre filtre sous son intitulé. Les listes proposent leurs valeurs métier et les champs texte acceptent une recherche partielle. Le bouton **×** en bout de ligne efface tous les filtres de l’onglet actif ; la recherche générale reste disponible en complément.
 
