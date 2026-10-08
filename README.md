@@ -2,6 +2,8 @@
 
 Dashboard web autonome contenu intégralement dans le seul fichier `index.html`, composé de quatre espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage** et **Suivi expertise**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
 
+L’interface utilise une palette corporate anthracite et rouge (`#FF2A49`), des bordures sobres, des ombres légères et des composants peu arrondis.
+
 Les titres des colonnes sont centrés et affichés en majuscules. Chaque colonne dispose de son propre filtre : les listes utilisent les valeurs métier disponibles et les champs texte permettent une recherche partielle. Le bouton **×** situé à droite de la ligne de filtres efface tous les filtres de l’onglet actif.
 
 Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
