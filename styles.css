@@ -3,3 +3,12 @@
 
 /* Champs de commentaire multiligne */
 td textarea{display:block;width:240px;min-height:44px;max-height:110px;resize:vertical;border:1px solid transparent;border-radius:6px;background:transparent;padding:8px;color:#455166;font:inherit}td textarea:focus,td textarea:hover{outline:0;border-color:#d7dbea;background:#fff;box-shadow:0 0 0 3px #7454df10}.form-grid textarea{display:block;width:100%;min-height:82px;margin-top:6px;padding:10px;border:1px solid #dfe3ea;border-radius:7px;background:#fff;font:inherit;resize:vertical}
+
+/* En-têtes centrés et filtres de colonnes */
+th{text-align:center;text-transform:uppercase}
+.column-filters th{height:45px;padding:6px;background:#fff;border-bottom:2px solid var(--purple)}
+.column-filters input,.column-filters select{width:100%;min-width:112px;height:30px;padding:0 8px;border:1px solid #dfe3ea;border-radius:6px;background:#f8f9fb;color:#667186;font:600 9px "DM Sans",sans-serif;text-transform:uppercase}
+.column-filters input:focus,.column-filters select:focus{outline:2px solid #7454df;outline-offset:-1px;background:#fff}
+.column-filters input::placeholder{color:#a6adba}
+.column-filters button{width:28px;height:28px;border:0;border-radius:50%;background:var(--purple);color:#fff;font-size:17px;cursor:pointer}
+.column-filters button:hover{background:#5c3bc4}

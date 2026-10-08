@@ -63,6 +63,7 @@ const initialData = Object.fromEntries(Object.entries(tabs).map(([key, tab]) => 
 let data;
 try { data = { ...initialData, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; } catch { data = clone(initialData); }
 let activeTab = "prospection";
+const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
 const $ = selector => document.querySelector(selector);
 
 function save() {
@@ -90,7 +91,14 @@ function renderHeader(columns) {
     while (columns[index + count]?.group === column.group) count += 1;
     cells.push(`<th colspan="${count}" class="group ${column.group.replaceAll(" ", "-")}">${column.group}</th>`); index += count;
   }
-  $("#tableHead").innerHTML = `<tr>${cells.join("")}<th rowspan="2" aria-label="Actions"></th></tr><tr>${columns.filter(column => column.group).map(column => `<th>${column.label}</th>`).join("")}</tr>`;
+  const filterCells = columns.map(column => {
+    const value = columnFilters[activeTab][column.key] || "";
+    if (column.type === "select") {
+      return `<th><select data-filter="${column.key}" aria-label="Filtrer ${column.label}"><option value="">TOUS</option>${column.options.map(option => `<option value="${escapeHtml(option)}"${option === value ? " selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></th>`;
+    }
+    return `<th><input data-filter="${column.key}" type="search" value="${escapeHtml(value)}" placeholder="FILTRER…" aria-label="Filtrer ${column.label}"></th>`;
+  }).join("");
+  $("#tableHead").innerHTML = `<tr class="heading-row">${cells.join("")}<th rowspan="2" aria-label="Actions"></th></tr><tr class="subheading-row">${columns.filter(column => column.group).map(column => `<th>${column.label}</th>`).join("")}</tr><tr class="column-filters">${filterCells}<th><button type="button" id="clearColumnFilters" title="Effacer les filtres" aria-label="Effacer les filtres">×</button></th></tr>`;
 }
 
 function metricsFor(key, rows) {
@@ -108,7 +116,16 @@ function render() {
   $("#metrics").innerHTML = metricsFor(activeTab, rows).map(([label, value], index) => `<article class="metric metric-${index}"><span>${label}</span><strong>${value}</strong><small>Mis à jour automatiquement</small></article>`).join("");
   renderHeader(tab.columns);
   const query = $("#searchInput").value.trim().toLowerCase();
-  const filtered = rows.map((row, index) => ({ row, index })).filter(({ row }) => !query || Object.values(row).join(" ").toLowerCase().includes(query));
+  const filters = columnFilters[activeTab];
+  const filtered = rows.map((row, index) => ({ row, index })).filter(({ row }) => {
+    if (query && !Object.values(row).join(" ").toLowerCase().includes(query)) return false;
+    return tab.columns.every(column => {
+      const filter = filters[column.key];
+      if (!filter) return true;
+      const value = String(row[column.key] || "").toLocaleLowerCase("fr");
+      return column.type === "select" ? value === filter.toLocaleLowerCase("fr") : value.includes(filter.toLocaleLowerCase("fr"));
+    });
+  });
   $("#tableBody").innerHTML = filtered.map(({ row, index }) => `<tr>${tab.columns.map(column => `<td>${control(column, row[column.key], index)}</td>`).join("")}<td><button class="delete" data-delete="${index}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td></tr>`).join("");
   $("#emptyState").hidden = filtered.length > 0; $("#resultCount").textContent = `${filtered.length} ligne${filtered.length > 1 ? "s" : ""} sur ${rows.length}`;
 }
@@ -118,6 +135,22 @@ function buildTabs(container) { container.innerHTML = Object.entries(tabs).map((
 buildTabs($("#sideTabs")); buildTabs($("#mobileTabs"));
 document.addEventListener("click", event => { const tabButton = event.target.closest("[data-tab]"); if (tabButton) setTab(tabButton.dataset.tab); });
 $("#searchInput").addEventListener("input", render);
+$("#tableHead").addEventListener("input", event => {
+  const key = event.target.dataset.filter;
+  if (!key) return;
+  columnFilters[activeTab][key] = event.target.value;
+  render();
+  const replacement = $(`#tableHead [data-filter="${key}"]`);
+  if (replacement?.matches("input")) {
+    replacement.focus();
+    replacement.setSelectionRange(replacement.value.length, replacement.value.length);
+  }
+});
+$("#tableHead").addEventListener("click", event => {
+  if (event.target.id !== "clearColumnFilters") return;
+  columnFilters[activeTab] = {};
+  render();
+});
 $("#tableBody").addEventListener("change", event => { if (!event.target.dataset.key) return; data[activeTab][Number(event.target.dataset.index)][event.target.dataset.key] = event.target.value; save(); render(); });
 $("#tableBody").addEventListener("click", event => { const button = event.target.closest("[data-delete]"); if (!button) return; data[activeTab].splice(Number(button.dataset.delete), 1); save(); render(); });
 
