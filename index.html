@@ -304,28 +304,33 @@ function workbookXml() {
 
 $("#exportButton").addEventListener("click", () => {
   const xml = "\uFEFF" + workbookXml();
-  const name = `identity-ai-dashboard-${new Date().toISOString().slice(0, 10)}.xls`;
+  const name = `identity-ai-dashboard-${new Date()
+    .toISOString()
+    .slice(0, 10)}.xls`;
+
   const blob = new Blob([xml], {
     type: "application/vnd.ms-excel;charset=utf-8"
   });
 
-  // Compatibilité Edge / Internet Explorer.
   if (navigator.msSaveOrOpenBlob) {
     navigator.msSaveOrOpenBlob(blob, name);
     return;
   }
 
-  // Évite URL.createObjectURL(), bloqué dans certains aperçus SharePoint.
   const link = document.createElement("a");
-  link.download = name;
-  link.href =
-    "data:application/vnd.ms-excel;charset=utf-8," +
-    encodeURIComponent(xml);
+  const objectUrl = URL.createObjectURL(blob);
 
+  link.href = objectUrl;
+  link.download = name;
   link.style.display = "none";
+
   document.body.appendChild(link);
   link.click();
-  link.remove();
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(objectUrl);
+    link.remove();
+  }, 1000);
 });
 
 function rowsFromValues(values, tabKey) {
