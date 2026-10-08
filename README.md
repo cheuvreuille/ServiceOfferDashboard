@@ -4,19 +4,18 @@ Dashboard web statique composé de quatre espaces indépendants : **Suivi prospe
 
 Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
 
-Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur. Le bouton **Sauvegarder en fichier Excel** exporte uniquement le tableau de l’onglet actif dans un fichier `.xls` lisible par Excel.
+Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur.
 
-## Synchronisation avec un fichier Excel SharePoint
+## Import et export Excel
 
-Le bouton **Lier un Excel SharePoint** associe séparément chaque onglet à un classeur `.xlsx` hébergé sur SharePoint. Il accepte directement le lien de partage SharePoint et utilise Microsoft Graph pour lire et modifier les cellules du classeur :
+Le partage entre utilisateurs repose uniquement sur un fichier Excel global :
 
-- les changements du tableau sont envoyés au fichier après 700 ms ;
-- le fichier est relu automatiquement toutes les 5, 15, 30 ou 60 secondes ;
-- les en-têtes du fichier doivent correspondre exactement à ceux de l’onglet ;
-- une feuille peut être indiquée ; à défaut, la première feuille du classeur est utilisée ;
-- avant chaque écriture, le dashboard vérifie que le contenu distant n’a pas changé afin de ne pas écraser une modification SharePoint.
+- **Exporter Excel** télécharge un classeur `.xls` contenant quatre onglets : `Suivi prospection`, `Suivi mission`, `Suivi stage` et `Suivi expertise` ;
+- **Importer Excel** relit les quatre onglets de ce classeur et restaure toutes leurs lignes dans le dashboard ;
+- l’import vérifie la présence des quatre onglets et les intitulés de toutes les colonnes avant de remplacer les données locales ;
+- un fichier invalide ou incomplet ne modifie aucune donnée existante.
 
-La synchronisation nécessite un **jeton d’accès Microsoft Graph** autorisé à lire et modifier le classeur. Ce jeton n’est jamais écrit dans le `localStorage` : il reste uniquement en mémoire et doit être renseigné à nouveau après le rechargement de la page. Le lien SharePoint, le nom de la feuille et la fréquence de lecture restent enregistrés localement.
+Pour partager les données, un utilisateur exporte le fichier global puis le transmet à un autre utilisateur, qui l’importe depuis le dashboard.
 
 ## Lancer localement
 
