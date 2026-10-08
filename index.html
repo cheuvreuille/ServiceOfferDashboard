@@ -20,6 +20,7 @@ th{text-align:center;text-transform:uppercase}
 .column-filters input::placeholder{color:#a6adba}
 .column-filters button{width:28px;height:28px;border:0;border-radius:50%;background:var(--purple);color:#fff;font-size:17px;cursor:pointer}
 .column-filters button:hover{background:#5c3bc4}
+.save-state.unavailable i{background:#efab42}
   </style>
 </head>
 <body>
@@ -33,7 +34,7 @@ th{text-align:center;text-transform:uppercase}
   <main>
     <header class="topbar">
       <div><span>Identity.ai</span><b>/</b><strong id="breadcrumb">Suivi prospection</strong></div>
-      <div class="save-state"><i></i> Enregistré localement · <span id="updatedAt">à l’instant</span></div>
+      <div class="save-state" id="saveState"><i></i><span id="saveStateLabel">Enregistré localement</span> · <span id="updatedAt">à l’instant</span></div>
     </header>
 
     <div class="mobile-tabs" id="mobileTabs"></div>
@@ -135,15 +136,30 @@ const tabs = {
 const STORAGE_KEY = "identity-ai-dashboard-v2";
 const clone = value => JSON.parse(JSON.stringify(value));
 const initialData = Object.fromEntries(Object.entries(tabs).map(([key, tab]) => [key, clone(tab.seed)]));
-let data;
-try { data = { ...initialData, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; } catch { data = clone(initialData); }
+let storageAvailable = true;
+let data = clone(initialData);
+try {
+  data = { ...initialData, ...JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}") };
+} catch {
+  storageAvailable = false;
+}
 let activeTab = "prospection";
 const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
 const $ = selector => document.querySelector(selector);
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  $("#updatedAt").textContent = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date());
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    storageAvailable = true;
+  } catch {
+    storageAvailable = false;
+  }
+
+  $("#saveState").classList.toggle("unavailable", !storageAvailable);
+  $("#saveStateLabel").textContent = storageAvailable ? "Enregistré localement" : "Session temporaire";
+  $("#updatedAt").textContent = storageAvailable
+    ? new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date())
+    : "stockage local indisponible";
 }
 
 function control(column, value = "", index = null) {
