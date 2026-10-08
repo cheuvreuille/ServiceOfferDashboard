@@ -264,6 +264,8 @@ function workbookXml() {
 }
 
 $("#exportButton").addEventListener("click", () => {
+  // L'API showSaveFilePicker est volontairement évitée : elle est bloquée
+  // dans les aperçus SharePoint. Le clic reste synchrone avec l'action utilisateur.
   const link = document.createElement("a");
   const fileUrl = URL.createObjectURL(
     new Blob([workbookXml()], {
@@ -274,9 +276,12 @@ $("#exportButton").addEventListener("click", () => {
   link.href = fileUrl;
   link.download = `identity-ai-dashboard-${new Date().toISOString().slice(0, 10)}.xls`;
   link.style.display = "none";
+  link.setAttribute("aria-hidden", "true");
   document.body.appendChild(link);
   link.click();
 
+  // SharePoint peut démarrer le téléchargement après le retour du gestionnaire.
+  // L'URL et le lien restent donc disponibles pendant une seconde.
   setTimeout(() => {
     link.remove();
     URL.revokeObjectURL(fileUrl);
