@@ -83,6 +83,9 @@ td input[type=url]{color:var(--purple-electric)}
 dialog{border-radius:8px;box-shadow:0 20px 60px #160b2d38}
 .form-grid input,.form-grid select,.form-grid textarea{border-radius:5px}
 .save-state i{background:var(--green)}
+.sidebar nav{overflow-y:auto}
+td select[multiple]{height:78px;padding:6px}
+.form-grid select[multiple]{height:105px;padding:6px}
 @media(max-width:760px){.content{padding:28px 18px}.mobile-tabs{background:var(--navy)}.mobile-tabs button.active{background:var(--purple-electric);color:#fff}}
   </style>
 </head>
@@ -208,6 +211,31 @@ const tabs = {
       { key: "link", label: "Link", type: "url" }
     ],
     seed: [{ sujet: "IAM et agents IA", type: "Article", dateCiblePublication: "2026-11-15", statut: "To start", porteur: "Practice Identity.ai", consultant: "Alex Martin", keyWord: "IAM, AI agents", link: "" }]
+  },
+  editeur: {
+    label: "Suivi editeur", icon: "⬡", description: "Relations éditeurs, potentiel business et prochaines rencontres.",
+    columns: [
+      { key: "editeur", label: "Editeur", type: "text" },
+      { key: "potentielBiz", label: "potnetiel biz", type: "select", options: ["low", "medium", "high"] },
+      { key: "type", label: "Type", type: "multiselect", options: ["Governance", "Access/Authn", "Gateway"] },
+      { key: "statut", label: "Statut", type: "select", options: ["Inconnue", "Echange sporadiques", "echange avancee", "partner"] },
+      { key: "porteur", label: "Porteur", type: "text" },
+      { key: "contactEditeur", label: "Contact Editeur", type: "text" },
+      { key: "dateDerniereRencontre", label: "date de derniere rencontre", type: "date" },
+      { key: "dateProchaineRencontre", label: "date de prochaine rencontre", type: "date" }
+    ],
+    seed: [{ editeur: "Example Security", potentielBiz: "medium", type: ["Governance", "Access/Authn"], statut: "Echange sporadiques", porteur: "Practice Identity.ai", contactEditeur: "", dateDerniereRencontre: "2026-09-15", dateProchaineRencontre: "2026-11-20" }]
+  },
+  planAction: {
+    label: "Suivi plan d'action", icon: "✓", description: "Actions prioritaires, responsables et échéances.",
+    columns: [
+      { key: "action", label: "Action", type: "text" },
+      { key: "prio", label: "Prio", type: "text" },
+      { key: "porteur", label: "Porteur", type: "text" },
+      { key: "satut", label: "Satut", type: "select", options: ["to start", "ongoing", "on hold", "done"] },
+      { key: "date", label: "Date", type: "date" }
+    ],
+    seed: [{ action: "Préparer le prochain comité offre", prio: "Haute", porteur: "Practice Identity.ai", satut: "to start", date: "2026-10-30" }]
   }
 };
 
@@ -246,6 +274,10 @@ function save() {
 function control(column, value = "", index = null) {
   const attributes = index === null ? `name="${column.key}"` : `data-index="${index}" data-key="${column.key}"`;
   if (column.type === "select") return `<select ${attributes} aria-label="${column.label}">${column.options.map(option => `<option${option === value ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  if (column.type === "multiselect") {
+    const selectedValues = Array.isArray(value) ? value : String(value || "").split(";").map(item => item.trim()).filter(Boolean);
+    return `<select ${attributes} multiple aria-label="${column.label}">${column.options.map(option => `<option${selectedValues.includes(option) ? " selected" : ""}>${option}</option>`).join("")}</select>`;
+  }
   if (column.type === "textarea") return `<textarea ${attributes} placeholder="Ajouter un commentaire…" aria-label="${column.label}">${escapeHtml(value)}</textarea>`;
   return `<input ${attributes} type="${column.type}" value="${escapeHtml(value)}" ${column.type === "url" ? 'placeholder="https://…"' : 'placeholder="—"'} aria-label="${column.label}">`;
 }
@@ -265,7 +297,7 @@ function renderHeader(columns) {
   }
   const filterCells = columns.map(column => {
     const value = columnFilters[activeTab][column.key] || "";
-    if (column.type === "select") {
+    if (column.type === "select" || column.type === "multiselect") {
       return `<th><select data-filter="${column.key}" aria-label="Filtrer ${column.label}"><option value="">TOUS</option>${column.options.map(option => `<option value="${escapeHtml(option)}"${option === value ? " selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></th>`;
     }
     return `<th><input data-filter="${column.key}" type="search" value="${escapeHtml(value)}" placeholder="FILTRER…" aria-label="Filtrer ${column.label}"></th>`;
@@ -278,6 +310,8 @@ function metricsFor(key, rows) {
   if (key === "mission") return [["MISSIONS", rows.length], ["EN COURS", rows.filter(r => r.statut === "on going").length], ["TERMINÉES", rows.filter(r => r.statut === "done").length], ["RÉFÉRENCES", rows.filter(r => r.ref === "yes").length]];
   if (key === "stage") return [["STAGES", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "to start").length], ["DÉMARRÉS", rows.filter(r => r.statut === "started").length], ["TERMINÉS", rows.filter(r => r.statut === "done").length]];
   if (key === "publication") return [["CONTENUS", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "To start").length], ["EN COURS", rows.filter(r => r.statut === "Started").length], ["PUBLIÉS", rows.filter(r => r.statut === "Published").length]];
+  if (key === "editeur") return [["ÉDITEURS", rows.length], ["POTENTIEL ÉLEVÉ", rows.filter(r => r.potentielBiz === "high").length], ["ÉCHANGES AVANCÉS", rows.filter(r => r.statut === "echange avancee").length], ["PARTNERS", rows.filter(r => r.statut === "partner").length]];
+  if (key === "planAction") return [["ACTIONS", rows.length], ["À DÉMARRER", rows.filter(r => r.satut === "to start").length], ["EN COURS", rows.filter(r => r.satut === "ongoing").length], ["TERMINÉES", rows.filter(r => r.satut === "done").length]];
   return [["CONSULTANTS", new Set(rows.map(r => r.nomConsultant).filter(Boolean)).size], ["SOLUTIONS", new Set(rows.map(r => r.nomSolution).filter(Boolean)).size], ["SACHANTS", rows.filter(r => r.statut === "sachant").length], ["CERTIFIÉS", rows.filter(r => r.statut === "certified").length]];
 }
 
@@ -295,7 +329,8 @@ function render() {
     return tab.columns.every(column => {
       const filter = filters[column.key];
       if (!filter) return true;
-      const value = String(row[column.key] || "").toLocaleLowerCase("fr");
+      const cellValue = row[column.key];
+      const value = (Array.isArray(cellValue) ? cellValue.join(" ") : String(cellValue || "")).toLocaleLowerCase("fr");
       return column.type === "select" ? value === filter.toLocaleLowerCase("fr") : value.includes(filter.toLocaleLowerCase("fr"));
     });
   });
@@ -324,21 +359,27 @@ $("#tableHead").addEventListener("click", event => {
   columnFilters[activeTab] = {};
   render();
 });
-$("#tableBody").addEventListener("change", event => { if (!event.target.dataset.key) return; data[activeTab][Number(event.target.dataset.index)][event.target.dataset.key] = event.target.value; save(); render(); });
+$("#tableBody").addEventListener("change", event => {
+  if (!event.target.dataset.key) return;
+  const value = event.target.multiple ? [...event.target.selectedOptions].map(option => option.value) : event.target.value;
+  data[activeTab][Number(event.target.dataset.index)][event.target.dataset.key] = value;
+  save(); render();
+});
 $("#tableBody").addEventListener("click", event => { const button = event.target.closest("[data-delete]"); if (!button) return; data[activeTab].splice(Number(button.dataset.delete), 1); save(); render(); });
 
 const dialog = $("#rowDialog");
 $("#addButton").addEventListener("click", () => { $("#formFields").innerHTML = tabs[activeTab].columns.map(column => `<label>${column.label}${control(column)}</label>`).join(""); dialog.showModal(); });
 [$("#closeDialog"), $("#cancelDialog")].forEach(button => button.addEventListener("click", () => dialog.close()));
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-$("#rowForm").addEventListener("submit", event => { event.preventDefault(); const values = new FormData(event.currentTarget); const row = {}; tabs[activeTab].columns.forEach(column => { row[column.key] = String(values.get(column.key) || "").trim(); }); data[activeTab].unshift(row); save(); dialog.close(); event.currentTarget.reset(); render(); });
+$("#rowForm").addEventListener("submit", event => { event.preventDefault(); const values = new FormData(event.currentTarget); const row = {}; tabs[activeTab].columns.forEach(column => { row[column.key] = column.type === "multiselect" ? values.getAll(column.key).map(String) : String(values.get(column.key) || "").trim(); }); data[activeTab].unshift(row); save(); dialog.close(); event.currentTarget.reset(); render(); });
 $("#resetButton").addEventListener("click", () => { data[activeTab] = clone(tabs[activeTab].seed); save(); render(); });
 
 function xmlEscape(value) { return escapeHtml(value); }
+function exportCellValue(value) { return Array.isArray(value) ? value.join("; ") : value || ""; }
 function worksheetXml(tabKey) {
   const tab = tabs[tabKey];
   const header = tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(column.label)}</Data></Cell>`).join("");
-  const rows = data[tabKey].map(row => `<Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(row[column.key] || "")}</Data></Cell>`).join("")}</Row>`).join("");
+  const rows = data[tabKey].map(row => `<Row>${tab.columns.map(column => `<Cell><Data ss:Type="String">${xmlEscape(exportCellValue(row[column.key]))}</Data></Cell>`).join("")}</Row>`).join("");
   return `<Worksheet ss:Name="${xmlEscape(tab.label)}"><Table><Row>${header}</Row>${rows}</Table></Worksheet>`;
 }
 function workbookXml() {
@@ -411,7 +452,7 @@ function rowsFromValues(values, tabKey) {
   const headers = values[0].map(String), columns = tabs[tabKey].columns, indexes = columns.map(column => headers.indexOf(column.label));
   const missing = columns.filter((column, index) => indexes[index] < 0).map(column => column.label);
   if (missing.length) throw new Error(`Colonnes absentes : ${missing.join(", ")}`);
-  return values.slice(1).filter(row => row.some(cell => cell !== "" && cell != null)).map(cells => { const item = {}; columns.forEach((column, index) => { item[column.key] = String(cells[indexes[index]] ?? ""); }); return item; });
+  return values.slice(1).filter(row => row.some(cell => cell !== "" && cell != null)).map(cells => { const item = {}; columns.forEach((column, index) => { const value = String(cells[indexes[index]] ?? ""); item[column.key] = column.type === "multiselect" ? value.split(";").map(entry => entry.trim()).filter(Boolean) : value; }); return item; });
 }
 
 function importWorkbook(xmlText) {
@@ -436,7 +477,7 @@ $("#importFile").addEventListener("change", async event => {
   try {
     const imported = importWorkbook(await file.text());
     data = imported; save(); render();
-    window.alert("Import terminé : les cinq tableaux ont été restaurés.");
+    window.alert("Import terminé : les sept tableaux ont été restaurés.");
   } catch (error) {
     window.alert(`Import impossible : ${error.message}`);
   } finally { event.target.value = ""; }
