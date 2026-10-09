@@ -194,6 +194,20 @@ const tabs = {
       { key: "nomCertification", label: "nom certification", type: "text" }
     ],
     seed: [{ nomConsultant: "Alex Martin", nomSolution: "SailPoint", statut: "certified", nomCertification: "IdentityIQ Engineer" }]
+  },
+  publication: {
+    label: "Publication et Communication", icon: "◉", description: "Contenus, prises de parole et communication de l’offre.",
+    columns: [
+      { key: "sujet", label: "Sujet", type: "text" },
+      { key: "type", label: "Type", type: "select", options: ["Article", "Conference", "White Paper", "Post LinkedIn"] },
+      { key: "dateCiblePublication", label: "Date cible de publication", type: "date" },
+      { key: "statut", label: "Statut", type: "select", options: ["To start", "Started", "Published"] },
+      { key: "porteur", label: "Porteur", type: "text" },
+      { key: "consultant", label: "Consultant", type: "text" },
+      { key: "keyWord", label: "Key word", type: "text" },
+      { key: "link", label: "Link", type: "url" }
+    ],
+    seed: [{ sujet: "IAM et agents IA", type: "Article", dateCiblePublication: "2026-11-15", statut: "To start", porteur: "Practice Identity.ai", consultant: "Alex Martin", keyWord: "IAM, AI agents", link: "" }]
   }
 };
 
@@ -263,6 +277,7 @@ function metricsFor(key, rows) {
   if (key === "prospection") return [["ENTREPRISES", rows.length], ["LEADS", rows.filter(r => r.ai4iamStatut === "lead" || r.iam4aiStatut === "lead").length], ["MISSIONS", rows.filter(r => r.ai4iamStatut === "mission" || r.iam4aiStatut === "mission").length], ["PITCHS FAITS", rows.filter(r => r.ai4iamStatut === "pitch fait" || r.iam4aiStatut === "pitch fait").length]];
   if (key === "mission") return [["MISSIONS", rows.length], ["EN COURS", rows.filter(r => r.statut === "on going").length], ["TERMINÉES", rows.filter(r => r.statut === "done").length], ["RÉFÉRENCES", rows.filter(r => r.ref === "yes").length]];
   if (key === "stage") return [["STAGES", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "to start").length], ["DÉMARRÉS", rows.filter(r => r.statut === "started").length], ["TERMINÉS", rows.filter(r => r.statut === "done").length]];
+  if (key === "publication") return [["CONTENUS", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "To start").length], ["EN COURS", rows.filter(r => r.statut === "Started").length], ["PUBLIÉS", rows.filter(r => r.statut === "Published").length]];
   return [["CONSULTANTS", new Set(rows.map(r => r.nomConsultant).filter(Boolean)).size], ["SOLUTIONS", new Set(rows.map(r => r.nomSolution).filter(Boolean)).size], ["SACHANTS", rows.filter(r => r.statut === "sachant").length], ["CERTIFIÉS", rows.filter(r => r.statut === "certified").length]];
 }
 
@@ -421,7 +436,7 @@ $("#importFile").addEventListener("change", async event => {
   try {
     const imported = importWorkbook(await file.text());
     data = imported; save(); render();
-    window.alert("Import terminé : les quatre tableaux ont été restaurés.");
+    window.alert("Import terminé : les cinq tableaux ont été restaurés.");
   } catch (error) {
     window.alert(`Import impossible : ${error.message}`);
   } finally { event.target.value = ""; }
