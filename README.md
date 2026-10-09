@@ -1,1 +1,45 @@
-# ServiceOfferDashboard
+# Identity.ai — Service Offer Dashboard
+
+Dashboard web autonome contenu intégralement dans le seul fichier `index.html`, composé de quatre espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage** et **Suivi expertise**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
+
+L’interface utilise une palette hybride Wavestone et technologique : violet nuit, violet de marque, interactions violet électrique et vert réservé aux actions positives, leads, missions et indicateurs clés.
+
+Les titres des colonnes sont centrés et affichés en majuscules. Chaque colonne dispose de son propre filtre : les listes utilisent les valeurs métier disponibles et les champs texte permettent une recherche partielle. Le bouton **×** situé à droite de la ligne de filtres efface tous les filtres de l’onglet actif.
+
+Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
+
+Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur lorsqu’il est disponible. Dans un aperçu SharePoint sandboxé qui interdit cet accès, le dashboard bascule automatiquement en **session temporaire** : toutes les fonctions restent utilisables, mais les données doivent être exportées avant de fermer la page.
+
+## Import et export Excel
+
+Le partage entre utilisateurs repose uniquement sur un fichier Excel global :
+
+- **Exporter Excel** télécharge un classeur `.xls` contenant quatre onglets : `Suivi prospection`, `Suivi mission`, `Suivi stage` et `Suivi expertise` ;
+- **Importer Excel** relit les quatre onglets de ce classeur et restaure toutes leurs lignes dans le dashboard ;
+- l’import vérifie la présence des quatre onglets et les intitulés de toutes les colonnes avant de remplacer les données locales ;
+- un fichier invalide ou incomplet ne modifie aucune donnée existante.
+
+L’export utilise un Blob et un lien temporaire ciblant une nouvelle fenêtre. Dans un aperçu SharePoint sandboxé, cette cible sert de navigation de secours lorsque l’attribut `download` est neutralisé. L’URL reste disponible pendant 60 secondes pour laisser au nouveau contexte le temps de charger le fichier. Edge historique et Internet Explorer conservent une voie dédiée via `msSaveOrOpenBlob`.
+
+Pour partager les données, un utilisateur exporte le fichier global puis le transmet à un autre utilisateur, qui l’importe depuis le dashboard.
+
+## Lancer localement
+
+```bash
+python3 -m http.server 8000
+```
+
+Puis ouvrir [http://localhost:8000](http://localhost:8000). Le fichier `index.html` peut également être ouvert directement dans un navigateur, sans installation ni compilation.
+
+## Publier le dashboard
+
+Le dépôt contient un workflow GitHub Pages qui publie automatiquement le dashboard à chaque push sur `main` ou `work`. Il peut aussi être lancé manuellement depuis l’onglet **Actions** de GitHub.
+
+Pour la première publication :
+
+1. ouvrir **Settings → Pages** dans le dépôt GitHub ;
+2. sélectionner **GitHub Actions** dans **Build and deployment → Source** ;
+3. pousser les changements sur `main` ou `work`, ou lancer l’action **Publier le dashboard** manuellement ;
+4. récupérer l’adresse publique affichée dans l’environnement `github-pages` à la fin du déploiement.
+
+Le site publié reste entièrement statique : les données sont conservées dans le `localStorage` de chaque navigateur et ne deviennent pas publiques. Pour transmettre les tableaux à un autre utilisateur, utiliser **Exporter Excel**, puis lui faire importer le fichier avec **Importer Excel**.
