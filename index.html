@@ -146,6 +146,7 @@ const tabs = {
     columns: [
       { key: "secteur", label: "secteur", type: "select", options: ["manuf", "dc", "ps", "fs"] },
       { key: "entreprise", label: "entreprise", type: "text" },
+      { key: "interet", label: "Interêt", type: "select", options: ["0%", "25%", "50%", "75%", "100%"] },
       { key: "diContact", label: "di contact", type: "text" },
       { key: "ai4iamStatut", label: "statut ai4iam", type: "select", options: OFFER_STATUSES, group: "ai4iam" },
       { key: "ai4iamDate", label: "date ai4iam", type: "date", group: "ai4iam" },
@@ -159,7 +160,7 @@ const tabs = {
       { key: "dpaiContactStatut", label: "statut", type: "select", options: CONTACT_STATUSES, group: "dpai contact" },
       { key: "commentaire", label: "Commentaire", type: "textarea" }
     ],
-    seed: [{ secteur: "fs", entreprise: "Groupe Aster", diContact: "Marie Dupont", aiContact: "Nora Martin", aiContactStatut: "discussion", dpaiContact: "Paul Robert", dpaiContactStatut: "pitch", ai4iamStatut: "pitch prévu", ai4iamDate: "2026-10-15", ai4iamContactClient: "Nora Martin", iam4aiStatut: "lead", iam4aiDate: "2026-10-22", iam4aiContactClient: "Paul Robert", commentaire: "Préparer le prochain atelier." }]
+    seed: [{ secteur: "fs", entreprise: "Groupe Aster", interet: "50%", diContact: "Marie Dupont", aiContact: "Nora Martin", aiContactStatut: "discussion", dpaiContact: "Paul Robert", dpaiContactStatut: "pitch", ai4iamStatut: "pitch prévu", ai4iamDate: "2026-10-15", ai4iamContactClient: "Nora Martin", iam4aiStatut: "lead", iam4aiDate: "2026-10-22", iam4aiContactClient: "Paul Robert", commentaire: "Préparer le prochain atelier." }]
   },
   mission: {
     label: "Suivi mission", icon: "◇", description: "Missions en cours, références et principaux sujets.",
@@ -206,6 +207,9 @@ try {
 } catch {
   storageAvailable = false;
 }
+data.prospection = Array.isArray(data.prospection)
+  ? data.prospection.map(row => ({ ...row, interet: row.interet || "0%" }))
+  : clone(initialData.prospection);
 let activeTab = "prospection";
 const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
 const $ = selector => document.querySelector(selector);

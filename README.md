@@ -8,6 +8,8 @@ Les titres des colonnes sont centrés et affichés en majuscules. Chaque colonne
 
 Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
 
+La colonne **Interêt** du suivi prospection permet de qualifier chaque entreprise avec l’une des valeurs `0%`, `25%`, `50%`, `75%` ou `100%`.
+
 Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur lorsqu’il est disponible. Dans un aperçu SharePoint sandboxé qui interdit cet accès, le dashboard bascule automatiquement en **session temporaire** : toutes les fonctions restent utilisables, mais les données doivent être exportées avant de fermer la page.
 
 ## Import et export Excel
