@@ -43,3 +43,20 @@ Pour la première publication :
 4. récupérer l’adresse publique affichée dans l’environnement `github-pages` à la fin du déploiement.
 
 Le site publié reste entièrement statique : les données sont conservées dans le `localStorage` de chaque navigateur et ne deviennent pas publiques. Pour transmettre les tableaux à un autre utilisateur, utiliser **Exporter Excel**, puis lui faire importer le fichier avec **Importer Excel**.
+
+## Publier une release
+
+Une release GitHub peut être publiée en poussant un tag de version :
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Le workflow **Publier une release** crée automatiquement une release GitHub contenant :
+
+- le fichier autonome `index.html` ;
+- une archive `identity-ai-dashboard-v1.0.0.zip` avec le dashboard et sa documentation ;
+- le fichier `SHA256SUMS.txt` permettant de vérifier l’intégrité des téléchargements.
+
+La publication peut aussi être lancée depuis **Actions → Publier une release → Run workflow** en renseignant une version au format `v1.2.3`.
