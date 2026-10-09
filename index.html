@@ -22,44 +22,68 @@ th{text-align:center;text-transform:uppercase}
 .column-filters button:hover{background:#5c3bc4}
 .save-state.unavailable i{background:#efab42}
 
-/* Thème corporate rouge */
-:root{--navy:#1A1A1A;--purple:#FF2A49;--ink:#202124;--line:#E2E4E8;--bg:#F7F7F8}
-body{background:#F7F7F8;color:#202124}
-.sidebar{background:#1A1A1A}
-.brand em{color:#FF2A49}
-.brand-mark{border-radius:5px;background:#FF2A49}
-.sidebar nav button{border-radius:4px}
-.sidebar nav button.active{background:#FF2A49;color:#fff}
-.sidebar-card,.sidebar-note{background:#242424;border-color:#383838;border-radius:5px}
-.topbar{border-color:#E2E4E8}
+/* Thème hybride Wavestone technologique */
+:root {
+  --navy: #160B2D;
+  --purple: #6F2C91;
+  --purple-light: #8A5BB7;
+  --purple-electric: #7B3FE4;
+  --green: #8CC63F;
+  --green-light: #B4DD6A;
+  --ink: #231536;
+  --muted: #7D718C;
+  --line: #E6DFF0;
+  --bg: #F7F4FA;
+  --white: #FFFFFF;
+  --deep-purple: #2B1454;
+}
+body{background:var(--bg);color:var(--ink)}
+.sidebar{background:linear-gradient(180deg,#160B2D 0%,#2B1454 100%)}
+.brand em{color:var(--green-light)}
+.brand-mark{border-radius:6px;background:var(--purple);box-shadow:0 0 18px #7b3fe466}
+.sidebar nav button{border-radius:6px}
+.sidebar nav button:hover{background:#ffffff12;color:#fff}
+.sidebar nav button.active{background:var(--purple-electric);color:#fff;box-shadow:0 0 16px #7b3fe455}
+.sidebar-card,.sidebar-note{background:#2B1454;border-color:#4A3566;border-radius:7px}
+.sidebar-note span{color:#C8BDD5}
+.topbar{border-color:var(--line)}
 .content{padding:40px}
 .hero h1{font-weight:700;letter-spacing:-1.3px}
 .workspace-head h2{font-weight:700;letter-spacing:-.35px}
-.button{border-radius:5px}
-.button.primary{background:#FF2A49;box-shadow:0 2px 7px #ff2a4926}
-.button.primary:hover{background:#D91F3B}
-.button.secondary{background:#fff;color:#5f6368;border-color:#E2E4E8}
-.button.secondary:hover{background:#f1f2f4;border-color:#cfd2d8;color:#202124}
-.metric{border:1px solid #343434;border-top:3px solid #343434;border-radius:5px;box-shadow:0 2px 8px #2021240a}
-.metric-0{border-top-color:#FF2A49}
-.metric-1,.metric-2,.metric-3{border-top-color:#343434}
-.workspace{border-color:#E2E4E8;border-radius:6px;box-shadow:0 2px 10px #2021240a}
-th{border-color:#E2E4E8}
-th.group,th.ai4iam,th.iam4ai{background:#292929;color:#fff}
-.column-filters th{border-bottom:2px solid #FF2A49}
-.column-filters input,.column-filters select{border-color:#E2E4E8;border-radius:4px;background:#fff;color:#5f6368}
-.column-filters input:focus,.column-filters select:focus{outline:0;border-color:#ff8c9d;box-shadow:0 0 0 3px #ff2a4914}
-.column-filters button{background:#FF2A49}
-.column-filters button:hover{background:#D91F3B}
-.search{border-color:#E2E4E8;border-radius:5px}
-.search:focus-within{border-color:#ff8c9d;box-shadow:0 0 0 3px #ff2a4914}
-td input,td select,td textarea{border-radius:4px}
-td input:focus,td select:focus,td textarea:focus{border-color:#ff8c9d;box-shadow:0 0 0 3px #ff2a4914}
-td input[type=url]{color:#FF2A49}
-.delete,.delete:hover{color:#FF2A49}
-dialog{border-radius:7px;box-shadow:0 18px 55px #2021242b}
-.form-grid input,.form-grid select,.form-grid textarea{border-radius:4px}
-@media(max-width:760px){.content{padding:28px 18px}.mobile-tabs button.active{background:#FF2A49;color:#fff}}
+.kicker{color:var(--purple-electric)}
+.button{border-radius:6px}
+.button.primary{background:var(--purple);box-shadow:0 3px 10px #6f2c912b}
+.button.primary:hover{background:var(--purple-electric)}
+#addButton,.modal-actions .button.primary{background:var(--green);color:#160B2D}
+#addButton:hover,.modal-actions .button.primary:hover{background:var(--green-light)}
+.button.secondary{background:#fff;color:var(--muted);border-color:var(--line)}
+.button.secondary:hover{background:#f0eaf6;border-color:var(--purple-light);color:var(--purple)}
+.metric{border:1px solid var(--line);border-top:3px solid var(--purple);border-radius:7px;box-shadow:0 2px 10px #160b2d0b}
+.metric-0{border-top-color:var(--purple)}
+.metric-1,.metric-2{border-top-color:var(--green)}
+.metric-3{border-top-color:var(--purple-electric)}
+.metric-1 strong,.metric-2 strong{color:#679a26}
+.workspace{border-color:var(--line);border-radius:7px;box-shadow:0 3px 14px #160b2d0c}
+th{border-color:var(--line)}
+th.group{background:var(--deep-purple);color:#F7F5FC}
+th.ai4iam{background:var(--purple-electric);color:#fff}
+th.iam4ai{background:var(--purple);color:#fff}
+.column-filters th{border-bottom:2px solid var(--purple-electric)}
+.column-filters input,.column-filters select{border-color:var(--line);border-radius:5px;background:#fff;color:var(--muted)}
+.column-filters input:focus,.column-filters select:focus{outline:0;border-color:var(--purple-light);box-shadow:0 0 0 3px #7b3fe418}
+.column-filters button{background:var(--purple)}
+.column-filters button:hover{background:var(--purple-electric)}
+.search{border-color:var(--line);border-radius:6px}
+.search:focus-within{border-color:var(--purple-light);box-shadow:0 0 0 3px #7b3fe418}
+td input,td select,td textarea{border-radius:5px}
+td input:focus,td select:focus,td textarea:focus{border-color:var(--purple-light);box-shadow:0 0 0 3px #7b3fe418}
+td input[type=url]{color:var(--purple-electric)}
+.delete{color:var(--purple-light)}
+.delete:hover{color:var(--purple-electric)}
+dialog{border-radius:8px;box-shadow:0 20px 60px #160b2d38}
+.form-grid input,.form-grid select,.form-grid textarea{border-radius:5px}
+.save-state i{background:var(--green)}
+@media(max-width:760px){.content{padding:28px 18px}.mobile-tabs{background:var(--navy)}.mobile-tabs button.active{background:var(--purple-electric);color:#fff}}
   </style>
 </head>
 <body>
