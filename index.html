@@ -326,7 +326,7 @@ function workbookXml() {
   return `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${Object.keys(tabs).map(worksheetXml).join("")}</Workbook>`;
 }
 
-$("#exportButton").addEventListener("click", () => {
+$("#exportButton").addEventListener("click", async () => {
   const xml = "\uFEFF" + workbookXml();
   const name = `identity-ai-dashboard-${new Date()
     .toISOString()
@@ -339,6 +339,29 @@ $("#exportButton").addEventListener("click", () => {
   if (navigator.msSaveOrOpenBlob) {
     navigator.msSaveOrOpenBlob(blob, name);
     return;
+  }
+
+  // Lorsque le navigateur l’autorise, afficher une boîte de dialogue afin
+  // que l’utilisateur choisisse explicitement le dossier de destination.
+  if (typeof window.showSaveFilePicker === "function") {
+    try {
+      const fileHandle = await window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{
+          description: "Classeur Excel",
+          accept: { "application/vnd.ms-excel": [".xls"] }
+        }]
+      });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (error) {
+      // Une annulation volontaire ne doit pas déclencher un téléchargement.
+      if (error.name === "AbortError") return;
+      // SharePoint peut bloquer cette API : utiliser alors le téléchargement
+      // classique ci-dessous plutôt que de rendre l’export inutilisable.
+    }
   }
 
   const link = document.createElement("a");
