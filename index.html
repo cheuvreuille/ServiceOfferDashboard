@@ -346,15 +346,22 @@ $("#exportButton").addEventListener("click", () => {
 
   link.href = objectUrl;
   link.download = name;
+  // Dans l’aperçu SharePoint, target="_blank" fournit une navigation de
+  // secours lorsque l’attribut download est neutralisé par la sandbox.
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.referrerPolicy = "no-referrer";
   link.style.display = "none";
 
   document.body.appendChild(link);
   link.click();
 
+  // Une prévisualisation SharePoint peut ouvrir le Blob dans un nouveau
+  // contexte de navigation : conserver l’URL assez longtemps pour son chargement.
   window.setTimeout(() => {
     URL.revokeObjectURL(objectUrl);
     link.remove();
-  }, 1000);
+  }, 60000);
 });
 
 function rowsFromValues(values, tabKey) {

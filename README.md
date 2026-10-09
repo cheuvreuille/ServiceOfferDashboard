@@ -19,7 +19,7 @@ Le partage entre utilisateurs repose uniquement sur un fichier Excel global :
 - l’import vérifie la présence des quatre onglets et les intitulés de toutes les colonnes avant de remplacer les données locales ;
 - un fichier invalide ou incomplet ne modifie aucune donnée existante.
 
-L’export n’utilise ni `showSaveFilePicker` ni `URL.createObjectURL`, qui peuvent être bloqués dans un aperçu SharePoint sandboxé. Il déclenche directement le téléchargement avec une URL `data:` et conserve une voie de compatibilité pour Edge et Internet Explorer via `msSaveOrOpenBlob`.
+L’export utilise un Blob et un lien temporaire ciblant une nouvelle fenêtre. Dans un aperçu SharePoint sandboxé, cette cible sert de navigation de secours lorsque l’attribut `download` est neutralisé. L’URL reste disponible pendant 60 secondes pour laisser au nouveau contexte le temps de charger le fichier. Edge historique et Internet Explorer conservent une voie dédiée via `msSaveOrOpenBlob`.
 
 Pour partager les données, un utilisateur exporte le fichier global puis le transmet à un autre utilisateur, qui l’importe depuis le dashboard.
 
