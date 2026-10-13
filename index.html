@@ -88,6 +88,10 @@ td select[multiple]{height:78px;padding:6px}
 .form-grid select[multiple]{height:105px;padding:6px}
 td textarea[data-key="action"]{width:320px;min-height:35px;height:auto;overflow:hidden;resize:none;white-space:pre-wrap;line-height:1.45}
 .form-grid textarea[name="action"]{min-height:110px}
+.sort-button{display:inline-flex;align-items:center;gap:5px;padding:7px 3px;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;text-transform:uppercase;cursor:pointer}
+.sort-button:hover,.sort-button:focus-visible{color:var(--purple-electric);outline:0}
+.sort-button .sort-icon{color:var(--muted);font-size:12px;line-height:1}
+.sort-button.active .sort-icon{color:var(--green)}
 @media(max-width:760px){.content{padding:28px 18px}.mobile-tabs{background:var(--navy)}.mobile-tabs button.active{background:var(--purple-electric);color:#fff}}
   </style>
 </head>
@@ -151,7 +155,7 @@ const tabs = {
     columns: [
       { key: "secteur", label: "secteur", type: "select", options: ["manuf", "dc", "ps", "fs"] },
       { key: "entreprise", label: "entreprise", type: "text" },
-      { key: "interet", label: "Interêt", type: "select", options: ["0%", "25%", "50%", "75%", "100%"] },
+      { key: "interet", label: "Potentiel", type: "select", options: ["0%", "25%", "50%", "75%", "100%"] },
       { key: "diContact", label: "di contact", type: "text" },
       { key: "ai4iamStatut", label: "statut ai4iam", type: "select", options: OFFER_STATUSES, group: "ai4iam" },
       { key: "ai4iamDate", label: "date ai4iam", type: "date", group: "ai4iam" },
@@ -260,6 +264,7 @@ data.planAction = Array.isArray(data.planAction)
   : clone(initialData.planAction);
 let activeTab = "prospection";
 const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
+const columnSorts = Object.fromEntries(Object.keys(tabs).map(key => [key, { key: "", direction: "" }]));
 const $ = selector => document.querySelector(selector);
 
 function save() {
@@ -293,10 +298,17 @@ function escapeHtml(value) {
 }
 
 function renderHeader(columns) {
+  const sortHeader = column => {
+    const sort = columnSorts[activeTab];
+    const active = sort.key === column.key;
+    const icon = active ? (sort.direction === "asc" ? "▲" : "▼") : "↕";
+    const direction = active && sort.direction === "asc" ? "décroissant" : "croissant";
+    return `<button type="button" class="sort-button${active ? " active" : ""}" data-sort="${column.key}" aria-label="Trier ${column.label} par ordre ${direction}" title="Trier par ordre ${direction}"><span>${column.label}</span><span class="sort-icon" aria-hidden="true">${icon}</span></button>`;
+  };
   const cells = [];
   for (let index = 0; index < columns.length;) {
     const column = columns[index];
-    if (!column.group) { cells.push(`<th rowspan="2">${column.label}</th>`); index += 1; continue; }
+    if (!column.group) { cells.push(`<th rowspan="2">${sortHeader(column)}</th>`); index += 1; continue; }
     let count = 1;
     while (columns[index + count]?.group === column.group) count += 1;
     cells.push(`<th colspan="${count}" class="group ${column.group.replaceAll(" ", "-")}">${column.group}</th>`); index += count;
@@ -308,7 +320,7 @@ function renderHeader(columns) {
     }
     return `<th><input data-filter="${column.key}" type="search" value="${escapeHtml(value)}" placeholder="FILTRER…" aria-label="Filtrer ${column.label}"></th>`;
   }).join("");
-  $("#tableHead").innerHTML = `<tr class="heading-row">${cells.join("")}<th rowspan="2" aria-label="Actions"></th></tr><tr class="subheading-row">${columns.filter(column => column.group).map(column => `<th>${column.label}</th>`).join("")}</tr><tr class="column-filters">${filterCells}<th><button type="button" id="clearColumnFilters" title="Effacer les filtres" aria-label="Effacer les filtres">×</button></th></tr>`;
+  $("#tableHead").innerHTML = `<tr class="heading-row">${cells.join("")}<th rowspan="2" aria-label="Actions"></th></tr><tr class="subheading-row">${columns.filter(column => column.group).map(column => `<th>${sortHeader(column)}</th>`).join("")}</tr><tr class="column-filters">${filterCells}<th><button type="button" id="clearColumnFilters" title="Effacer les filtres" aria-label="Effacer les filtres">×</button></th></tr>`;
 }
 
 function metricsFor(key, rows) {
@@ -319,6 +331,12 @@ function metricsFor(key, rows) {
   if (key === "editeur") return [["ÉDITEURS", rows.length], ["POTENTIEL ÉLEVÉ", rows.filter(r => r.potentielBiz === "high").length], ["ÉCHANGES AVANCÉS", rows.filter(r => r.statut === "echange avancee").length], ["PARTNERS", rows.filter(r => r.statut === "partner").length]];
   if (key === "planAction") return [["ACTIONS", rows.length], ["À DÉMARRER", rows.filter(r => r.satut === "to start").length], ["EN COURS", rows.filter(r => r.satut === "ongoing").length], ["TERMINÉES", rows.filter(r => r.satut === "done").length]];
   return [["CONSULTANTS", new Set(rows.map(r => r.nomConsultant).filter(Boolean)).size], ["SOLUTIONS", new Set(rows.map(r => r.nomSolution).filter(Boolean)).size], ["SACHANTS", rows.filter(r => r.statut === "sachant").length], ["CERTIFIÉS", rows.filter(r => r.statut === "certified").length]];
+}
+
+function compareColumnValues(left, right, direction) {
+  const normalize = value => (Array.isArray(value) ? value.join("; ") : String(value ?? "")).trim();
+  const comparison = normalize(left).localeCompare(normalize(right), "fr", { numeric: true, sensitivity: "base" });
+  return direction === "asc" ? comparison : -comparison;
 }
 
 function render() {
@@ -340,6 +358,10 @@ function render() {
       return column.type === "select" ? value === filter.toLocaleLowerCase("fr") : value.includes(filter.toLocaleLowerCase("fr"));
     });
   });
+  const sort = columnSorts[activeTab];
+  if (sort.key && sort.direction) {
+    filtered.sort((left, right) => compareColumnValues(left.row[sort.key], right.row[sort.key], sort.direction));
+  }
   $("#tableBody").innerHTML = filtered.map(({ row, index }) => `<tr>${tab.columns.map(column => `<td>${control(column, row[column.key], index)}</td>`).join("")}<td><button class="delete" data-delete="${index}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td></tr>`).join("");
   document.querySelectorAll('#tableBody textarea[data-key="action"]').forEach(resizeActionField);
   $("#emptyState").hidden = filtered.length > 0; $("#resultCount").textContent = `${filtered.length} ligne${filtered.length > 1 ? "s" : ""} sur ${rows.length}`;
@@ -367,9 +389,19 @@ $("#tableHead").addEventListener("input", event => {
   }
 });
 $("#tableHead").addEventListener("click", event => {
-  if (event.target.id !== "clearColumnFilters") return;
-  columnFilters[activeTab] = {};
-  render();
+  const sortButton = event.target.closest("[data-sort]");
+  if (sortButton) {
+    const current = columnSorts[activeTab];
+    columnSorts[activeTab] = current.key === sortButton.dataset.sort
+      ? { key: current.key, direction: current.direction === "asc" ? "desc" : "asc" }
+      : { key: sortButton.dataset.sort, direction: "asc" };
+    render();
+    return;
+  }
+  if (event.target.id === "clearColumnFilters") {
+    columnFilters[activeTab] = {};
+    render();
+  }
 });
 $("#tableBody").addEventListener("change", event => {
   if (!event.target.dataset.key) return;
@@ -464,7 +496,10 @@ $("#exportButton").addEventListener("click", async () => {
 
 function rowsFromValues(values, tabKey) {
   if (!values?.length) return [];
-  const headers = values[0].map(String), columns = tabs[tabKey].columns, indexes = columns.map(column => headers.indexOf(column.label));
+  const headers = values[0].map(String), columns = tabs[tabKey].columns, indexes = columns.map(column => {
+    const index = headers.indexOf(column.label);
+    return index < 0 && tabKey === "prospection" && column.key === "interet" ? headers.indexOf("Interêt") : index;
+  });
   const missing = columns.filter((column, index) => indexes[index] < 0).map(column => column.label);
   if (missing.length) throw new Error(`Colonnes absentes : ${missing.join(", ")}`);
   return values.slice(1).filter(row => row.some(cell => cell !== "" && cell != null)).map(cells => { const item = {}; columns.forEach((column, index) => { const value = String(cells[indexes[index]] ?? ""); item[column.key] = column.type === "multiselect" ? value.split(";").map(entry => entry.trim()).filter(Boolean) : value; }); return item; });

@@ -4,11 +4,11 @@ Dashboard web autonome contenu intégralement dans le seul fichier `index.html`,
 
 L’interface utilise une palette hybride Wavestone et technologique : violet nuit, violet de marque, interactions violet électrique et vert réservé aux actions positives, leads, missions et indicateurs clés.
 
-Les titres des colonnes sont centrés et affichés en majuscules. Chaque colonne dispose de son propre filtre : les listes utilisent les valeurs métier disponibles et les champs texte permettent une recherche partielle. Le bouton **×** situé à droite de la ligne de filtres efface tous les filtres de l’onglet actif.
+Les titres des colonnes sont centrés et affichés en majuscules. Chaque titre permet de classer les lignes par ordre alphabétique croissant ou décroissant. Chaque colonne dispose aussi de son propre filtre : les listes utilisent les valeurs métier disponibles et les champs texte permettent une recherche partielle. Le bouton **×** situé à droite de la ligne de filtres efface tous les filtres de l’onglet actif.
 
 Dans le suivi prospection, les groupes **AI4IAM** et **IAM4AI** apparaissent avant les groupes **ai contact** et **dpai contact**. La colonne **Commentaire** utilise une zone de texte multiligne éditable.
 
-La colonne **Interêt** du suivi prospection permet de qualifier chaque entreprise avec l’une des valeurs `0%`, `25%`, `50%`, `75%` ou `100%`.
+La colonne **Potentiel** du suivi prospection permet de qualifier chaque entreprise avec l’une des valeurs `0%`, `25%`, `50%`, `75%` ou `100%`.
 
 L’espace **Publication et Communication** suit les sujets, formats, dates cibles, statuts, porteurs, consultants, mots-clés et liens des contenus à publier.
 
