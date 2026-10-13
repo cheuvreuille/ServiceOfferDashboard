@@ -12,7 +12,7 @@ La colonne **Interêt** du suivi prospection permet de qualifier chaque entrepri
 
 L’espace **Publication et Communication** suit les sujets, formats, dates cibles, statuts, porteurs, consultants, mots-clés et liens des contenus à publier.
 
-L’espace **Suivi editeur** suit le potentiel business, les domaines couverts, le niveau de relation et les rencontres avec chaque éditeur. La colonne **Type** permet de sélectionner plusieurs valeurs. L’espace **Suivi plan d'action** centralise les actions, priorités, porteurs, statuts et dates.
+L’espace **Suivi editeur** suit le potentiel business, les domaines couverts, le niveau de relation et les rencontres avec chaque éditeur. La colonne **Type** permet de sélectionner plusieurs valeurs. L’espace **Suivi plan d'action** centralise les actions, priorités, porteurs, statuts et dates. Son champ **Action** s’agrandit automatiquement pour afficher le texte intégral, et la priorité est sélectionnée parmi `P0`, `P1`, `P2` et `P3`.
 
 Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur lorsqu’il est disponible. Dans un aperçu SharePoint sandboxé qui interdit cet accès, le dashboard bascule automatiquement en **session temporaire** : toutes les fonctions restent utilisables, mais les données doivent être exportées avant de fermer la page.
 

@@ -86,6 +86,8 @@ dialog{border-radius:8px;box-shadow:0 20px 60px #160b2d38}
 .sidebar nav{overflow-y:auto}
 td select[multiple]{height:78px;padding:6px}
 .form-grid select[multiple]{height:105px;padding:6px}
+td textarea[data-key="action"]{width:320px;min-height:35px;height:auto;overflow:hidden;resize:none;white-space:pre-wrap;line-height:1.45}
+.form-grid textarea[name="action"]{min-height:110px}
 @media(max-width:760px){.content{padding:28px 18px}.mobile-tabs{background:var(--navy)}.mobile-tabs button.active{background:var(--purple-electric);color:#fff}}
   </style>
 </head>
@@ -229,13 +231,13 @@ const tabs = {
   planAction: {
     label: "Suivi plan d'action", icon: "✓", description: "Actions prioritaires, responsables et échéances.",
     columns: [
-      { key: "action", label: "Action", type: "text" },
-      { key: "prio", label: "Prio", type: "text" },
+      { key: "action", label: "Action", type: "textarea" },
+      { key: "prio", label: "Prio", type: "select", options: ["P0", "P1", "P2", "P3"] },
       { key: "porteur", label: "Porteur", type: "text" },
       { key: "satut", label: "Satut", type: "select", options: ["to start", "ongoing", "on hold", "done"] },
       { key: "date", label: "Date", type: "date" }
     ],
-    seed: [{ action: "Préparer le prochain comité offre", prio: "Haute", porteur: "Practice Identity.ai", satut: "to start", date: "2026-10-30" }]
+    seed: [{ action: "Préparer le prochain comité offre et partager les décisions avec l’ensemble de l’équipe.", prio: "P1", porteur: "Practice Identity.ai", satut: "to start", date: "2026-10-30" }]
   }
 };
 
@@ -252,6 +254,10 @@ try {
 data.prospection = Array.isArray(data.prospection)
   ? data.prospection.map(row => ({ ...row, interet: row.interet || "0%" }))
   : clone(initialData.prospection);
+const priorityOptions = ["P0", "P1", "P2", "P3"];
+data.planAction = Array.isArray(data.planAction)
+  ? data.planAction.map(row => ({ ...row, prio: priorityOptions.includes(row.prio) ? row.prio : "P2" }))
+  : clone(initialData.planAction);
 let activeTab = "prospection";
 const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
 const $ = selector => document.querySelector(selector);
@@ -335,7 +341,13 @@ function render() {
     });
   });
   $("#tableBody").innerHTML = filtered.map(({ row, index }) => `<tr>${tab.columns.map(column => `<td>${control(column, row[column.key], index)}</td>`).join("")}<td><button class="delete" data-delete="${index}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td></tr>`).join("");
+  document.querySelectorAll('#tableBody textarea[data-key="action"]').forEach(resizeActionField);
   $("#emptyState").hidden = filtered.length > 0; $("#resultCount").textContent = `${filtered.length} ligne${filtered.length > 1 ? "s" : ""} sur ${rows.length}`;
+}
+
+function resizeActionField(field) {
+  field.style.height = "0";
+  field.style.height = `${field.scrollHeight}px`;
 }
 
 function setTab(key) { activeTab = key; $("#searchInput").value = ""; render(); }
@@ -364,6 +376,9 @@ $("#tableBody").addEventListener("change", event => {
   const value = event.target.multiple ? [...event.target.selectedOptions].map(option => option.value) : event.target.value;
   data[activeTab][Number(event.target.dataset.index)][event.target.dataset.key] = value;
   save(); render();
+});
+$("#tableBody").addEventListener("input", event => {
+  if (event.target.matches('textarea[data-key="action"]')) resizeActionField(event.target);
 });
 $("#tableBody").addEventListener("click", event => { const button = event.target.closest("[data-delete]"); if (!button) return; data[activeTab].splice(Number(button.dataset.delete), 1); save(); render(); });
 
