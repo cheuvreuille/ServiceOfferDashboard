@@ -1,6 +1,6 @@
 # Identity.ai — Service Offer Dashboard
 
-Dashboard web autonome contenu intégralement dans le seul fichier `index.html`, composé de sept espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage**, **Suivi expertise**, **Publication et Communication**, **Suivi editeur** et **Suivi plan d'action**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
+Dashboard web autonome contenu intégralement dans le seul fichier `index.html`, composé de huit espaces indépendants : **Suivi prospection**, **Suivi mission**, **Suivi stage**, **Suivi expertise**, **Publication et Communication**, **Suivi des outils AI4IAM**, **Suivi editeur** et **Suivi plan d'action**. Chaque espace dispose de ses propres KPI et de son tableau intégralement éditable, construit avec les colonnes et types de champs métier demandés.
 
 L’interface utilise une palette hybride Wavestone et technologique : violet nuit, violet de marque, interactions violet électrique et vert réservé aux actions positives, leads, missions et indicateurs clés.
 
@@ -14,7 +14,7 @@ La colonne **Potentiel** du suivi prospection permet de qualifier chaque entrepr
 
 L’espace **Publication et Communication** suit les sujets, formats, dates cibles, statuts, porteurs, consultants, mots-clés et liens des contenus à publier.
 
-L’espace **Suivi editeur** suit le potentiel business, les domaines couverts, le niveau de relation et les rencontres avec chaque éditeur. La colonne **Type** permet de sélectionner plusieurs valeurs. L’espace **Suivi plan d'action** centralise les actions, priorités, porteurs, statuts et dates. Son champ **Action** s’agrandit automatiquement pour afficher le texte intégral, et la priorité est sélectionnée parmi `P0`, `P1`, `P2` et `P3`.
+L’espace **Suivi des outils AI4IAM** suit les outils, leurs responsables, leurs contacts, leur description, leur cycle de vie et leurs liens. L’espace **Suivi editeur** suit le potentiel business, les domaines couverts, le niveau de relation et les rencontres avec chaque éditeur. La colonne **Type** permet de sélectionner plusieurs valeurs et la colonne **Comments** fournit un champ texte multiligne. L’espace **Suivi plan d'action** centralise les actions, priorités, porteurs, statuts et dates. Son champ **Action** s’agrandit automatiquement pour afficher le texte intégral, et la priorité est sélectionnée parmi `P0`, `P1`, `P2` et `P3`.
 
 Les changements sont enregistrés automatiquement dans le `localStorage` du navigateur lorsqu’il est disponible. Dans un aperçu SharePoint sandboxé qui interdit cet accès, le dashboard bascule automatiquement en **session temporaire** : toutes les fonctions restent utilisables, mais les données doivent être exportées avant de fermer la page.
 
@@ -22,9 +22,9 @@ Les changements sont enregistrés automatiquement dans le `localStorage` du navi
 
 Le partage entre utilisateurs repose uniquement sur un fichier Excel global :
 
-- **Exporter Excel** télécharge un classeur `.xls` contenant les sept onglets du dashboard ;
-- **Importer Excel** relit les sept onglets de ce classeur et restaure toutes leurs lignes dans le dashboard ;
-- l’import vérifie la présence des sept onglets et les intitulés de toutes les colonnes avant de remplacer les données locales ;
+- **Exporter Excel** télécharge un classeur `.xls` contenant les huit onglets du dashboard ;
+- **Importer Excel** relit les huit onglets de ce classeur et restaure toutes leurs lignes dans le dashboard ;
+- l’import vérifie la présence des onglets et les intitulés des colonnes avant de remplacer les données locales ; les anciens exports à sept onglets restent acceptés, avec un suivi des outils vide et une colonne **Comments** vide ;
 - un fichier invalide ou incomplet ne modifie aucune donnée existante.
 
 Lorsqu’il est autorisé par le navigateur, **Exporter Excel** ouvre une boîte de dialogue permettant de choisir le dossier et le nom du fichier — l’utilisateur peut donc sélectionner le dossier contenant `index.html`. Un aperçu SharePoint sandboxé peut interdire ce sélecteur ; dans ce cas, l’application revient automatiquement au téléchargement navigateur via un Blob et un lien temporaire ciblant une nouvelle fenêtre. La destination de ce téléchargement de secours dépend alors des réglages du navigateur. Edge historique et Internet Explorer conservent une voie dédiée via `msSaveOrOpenBlob`.

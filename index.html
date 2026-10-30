@@ -218,6 +218,18 @@ const tabs = {
     ],
     seed: [{ sujet: "IAM et agents IA", type: "Article", dateCiblePublication: "2026-11-15", statut: "To start", porteur: "Practice Identity.ai", consultant: "Alex Martin", keyWord: "IAM, AI agents", link: "" }]
   },
+  ai4iamTools: {
+    label: "Suivi des outils AI4IAM", icon: "⌘", description: "Outils AI4IAM, responsables, contacts et cycle de vie.",
+    columns: [
+      { key: "name", label: "Name", type: "text" },
+      { key: "owner", label: "Owner", type: "text" },
+      { key: "mainContacts", label: "Main contacts", type: "text" },
+      { key: "description", label: "Description", type: "textarea" },
+      { key: "status", label: "Status", type: "select", options: ["To Start", "Maquette", "Prod", "EndOfLife"] },
+      { key: "links", label: "Links", type: "textarea" }
+    ],
+    seed: []
+  },
   editeur: {
     label: "Suivi editeur", icon: "⬡", description: "Relations éditeurs, potentiel business et prochaines rencontres.",
     columns: [
@@ -228,9 +240,10 @@ const tabs = {
       { key: "porteur", label: "Porteur", type: "text" },
       { key: "contactEditeur", label: "Contact Editeur", type: "text" },
       { key: "dateDerniereRencontre", label: "date de derniere rencontre", type: "date" },
-      { key: "dateProchaineRencontre", label: "date de prochaine rencontre", type: "date" }
+      { key: "dateProchaineRencontre", label: "date de prochaine rencontre", type: "date" },
+      { key: "comments", label: "Comments", type: "textarea" }
     ],
-    seed: [{ editeur: "Example Security", potentielBiz: "medium", type: ["Governance", "Access/Authn"], statut: "Echange sporadiques", porteur: "Practice Identity.ai", contactEditeur: "", dateDerniereRencontre: "2026-09-15", dateProchaineRencontre: "2026-11-20" }]
+    seed: [{ editeur: "Example Security", potentielBiz: "medium", type: ["Governance", "Access/Authn"], statut: "Echange sporadiques", porteur: "Practice Identity.ai", contactEditeur: "", dateDerniereRencontre: "2026-09-15", dateProchaineRencontre: "2026-11-20", comments: "" }]
   },
   planAction: {
     label: "Suivi plan d'action", icon: "✓", description: "Actions prioritaires, responsables et échéances.",
@@ -262,6 +275,9 @@ const priorityOptions = ["P0", "P1", "P2", "P3"];
 data.planAction = Array.isArray(data.planAction)
   ? data.planAction.map(row => ({ ...row, prio: priorityOptions.includes(row.prio) ? row.prio : "P2" }))
   : clone(initialData.planAction);
+data.editeur = Array.isArray(data.editeur)
+  ? data.editeur.map(row => ({ ...row, comments: row.comments || "" }))
+  : clone(initialData.editeur);
 let activeTab = "prospection";
 const columnFilters = Object.fromEntries(Object.keys(tabs).map(key => [key, {}]));
 const columnSorts = Object.fromEntries(Object.keys(tabs).map(key => [key, { key: "", direction: "" }]));
@@ -328,6 +344,7 @@ function metricsFor(key, rows) {
   if (key === "mission") return [["MISSIONS", rows.length], ["EN COURS", rows.filter(r => r.statut === "on going").length], ["TERMINÉES", rows.filter(r => r.statut === "done").length], ["RÉFÉRENCES", rows.filter(r => r.ref === "yes").length]];
   if (key === "stage") return [["STAGES", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "to start").length], ["DÉMARRÉS", rows.filter(r => r.statut === "started").length], ["TERMINÉS", rows.filter(r => r.statut === "done").length]];
   if (key === "publication") return [["CONTENUS", rows.length], ["À DÉMARRER", rows.filter(r => r.statut === "To start").length], ["EN COURS", rows.filter(r => r.statut === "Started").length], ["PUBLIÉS", rows.filter(r => r.statut === "Published").length]];
+  if (key === "ai4iamTools") return [["OUTILS", rows.length], ["À DÉMARRER", rows.filter(r => r.status === "To Start").length], ["MAQUETTES", rows.filter(r => r.status === "Maquette").length], ["EN PROD", rows.filter(r => r.status === "Prod").length]];
   if (key === "editeur") return [["ÉDITEURS", rows.length], ["POTENTIEL ÉLEVÉ", rows.filter(r => r.potentielBiz === "high").length], ["ÉCHANGES AVANCÉS", rows.filter(r => r.statut === "echange avancee").length], ["PARTNERS", rows.filter(r => r.statut === "partner").length]];
   if (key === "planAction") return [["ACTIONS", rows.length], ["À DÉMARRER", rows.filter(r => r.satut === "to start").length], ["EN COURS", rows.filter(r => r.satut === "ongoing").length], ["TERMINÉES", rows.filter(r => r.satut === "done").length]];
   return [["CONSULTANTS", new Set(rows.map(r => r.nomConsultant).filter(Boolean)).size], ["SOLUTIONS", new Set(rows.map(r => r.nomSolution).filter(Boolean)).size], ["SACHANTS", rows.filter(r => r.statut === "sachant").length], ["CERTIFIÉS", rows.filter(r => r.statut === "certified").length]];
@@ -496,11 +513,12 @@ $("#exportButton").addEventListener("click", async () => {
 
 function rowsFromValues(values, tabKey) {
   if (!values?.length) return [];
+  const optionalLegacyColumns = tabKey === "editeur" ? new Set(["comments"]) : new Set();
   const headers = values[0].map(String), columns = tabs[tabKey].columns, indexes = columns.map(column => {
     const index = headers.indexOf(column.label);
     return index < 0 && tabKey === "prospection" && column.key === "interet" ? headers.indexOf("Interêt") : index;
   });
-  const missing = columns.filter((column, index) => indexes[index] < 0).map(column => column.label);
+  const missing = columns.filter((column, index) => indexes[index] < 0 && !optionalLegacyColumns.has(column.key)).map(column => column.label);
   if (missing.length) throw new Error(`Colonnes absentes : ${missing.join(", ")}`);
   return values.slice(1).filter(row => row.some(cell => cell !== "" && cell != null)).map(cells => { const item = {}; columns.forEach((column, index) => { const value = String(cells[indexes[index]] ?? ""); item[column.key] = column.type === "multiselect" ? value.split(";").map(entry => entry.trim()).filter(Boolean) : value; }); return item; });
 }
@@ -512,6 +530,10 @@ function importWorkbook(xmlText) {
   const imported = {};
   Object.entries(tabs).forEach(([tabKey, tab]) => {
     const worksheet = worksheets.find(sheet => sheet.getAttribute("ss:Name") === tab.label || sheet.getAttributeNS("urn:schemas-microsoft-com:office:spreadsheet", "Name") === tab.label);
+    if (!worksheet && tabKey === "ai4iamTools") {
+      imported[tabKey] = [];
+      return;
+    }
     if (!worksheet) throw new Error(`Onglet manquant : ${tab.label}.`);
     const rows = [...worksheet.getElementsByTagName("Row")];
     if (!rows.length) throw new Error(`L’onglet ${tab.label} ne contient pas d’en-têtes.`);
@@ -527,7 +549,7 @@ $("#importFile").addEventListener("change", async event => {
   try {
     const imported = importWorkbook(await file.text());
     data = imported; save(); render();
-    window.alert("Import terminé : les sept tableaux ont été restaurés.");
+    window.alert("Import terminé : les huit tableaux ont été restaurés.");
   } catch (error) {
     window.alert(`Import impossible : ${error.message}`);
   } finally { event.target.value = ""; }
