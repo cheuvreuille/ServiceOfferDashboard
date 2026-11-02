@@ -1,0 +1,67 @@
+name: Publier une release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version à publier (ex. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Déterminer la version
+        id: version
+        env:
+          MANUAL_TAG: ${{ inputs.tag }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="$MANUAL_TAG"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "La version doit respecter le format v1.2.3."
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Préparer les fichiers de la release
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          mkdir -p "identity-ai-dashboard-$TAG"
+          cp index.html README.md "identity-ai-dashboard-$TAG/"
+          zip -r "identity-ai-dashboard-$TAG.zip" "identity-ai-dashboard-$TAG"
+          sha256sum index.html "identity-ai-dashboard-$TAG.zip" > SHA256SUMS.txt
+
+      - name: Créer et publier la release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "$TAG"
+          fi
+
+          gh release create "$TAG" \
+            index.html \
+            "identity-ai-dashboard-$TAG.zip" \
+            SHA256SUMS.txt \
+            --title "Identity.ai Dashboard $TAG" \
+            --generate-notes \
+            --verify-tag
